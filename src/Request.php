@@ -1,14 +1,15 @@
 <?php
 namespace Inek\PsrSwoole;
 
-use Psr\Http\Message\{RequestInterface,UriInterface,StreamInterface};
+use Psr\Http\Message\{RequestInterface,UriFactoryInterface,UriInterface,StreamInterface};
 use Swoole\Http\Request as SwooleRequest;
 
 class Request implements RequestInterface
 {
-    public function __construct(SwooleRequest $swooleRequest)
+    public function __construct(SwooleRequest $swooleRequest, UriFactoryInterface $uriFactory)
     {
         $this->swooleRequest = $swooleRequest;
+        $this->uriFactory = $uriFactory;
     }
 
     public function getRequestTarget()
@@ -59,46 +60,136 @@ class Request implements RequestInterface
 
     public function getUri()
     {
+        if (!empty($this->uri)) {
+            return $this->uri;
+        }
+
+        $userInfo = $this->parseUserInfo() ?? null;
+
+        $uri = (!empty($userInfo) ? '//' . $userInfo . '@' : '')
+            . $this->swooleRequest->header['host']
+            . $this->getRequestTarget()
+            ;
+
+        return $this->uri = $this->uriFactory->createUri(
+            $uri
+        );
+    }
+
+    private function parseUserInfo()
+    {
+        $authorization = $this->swooleRequest->header['authorization'] ?? '';
+
+        if (strpos($authorization, 'Basic') === 0) {
+            $parts = explode(' ', $authorization);
+            return base64_decode($parts[1]);
+        }
+
+        return null;
     }
 
     public function withUri(UriInterface $uri, $preserveHost = false)
     {
+        $new = clone $this;
+        $new->uri = $uri;
+        return $new;
     }
 
     public function getProtocolVersion()
     {
+        return $this->protocol ?? ($this->protocol = '1.1');
     }
 
     public function withProtocolVersion($version)
     {
+        $new = clone $this;
+        $new->protocol = $version;
+        return $new;
     }
 
     public function getHeaders()
     {
+        return $this->swooleRequest->header;
     }
 
     public function hasHeader($name)
     {
+        foreach ($this->swooleRequest->header as $key => $value) {
+            if (strtolower($name) == strtolower($key)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     public function getHeader($name)
     {
+        if (!$this->hasHeader($name)) {
+            return [];
+        }
+
+        foreach ($this->swooleRequest->header as $key => $value) {
+            if (strtolower($name) == strtolower($key)) {
+                return is_array($value)
+                    ? $value
+                    : [$value]
+                    ;
+            }
+        }
     }
     
     public function getHeaderLine($name)
     {
+        foreach ($this->swooleRequest->header as $key => $value) {
+            if (strtolower($name) == strtolower($key)) {
+                return implode(',', $value);
+            }
+        }
+
+        return '';
     }
 
     public function withHeader($name, $value)
     {
+        $new = clone $this;
+        $new->swooleRequest->header[$name] = $value;
+        return $new;
     }
 
     public function withAddedHeader($name, $value)
     {
+        if (!$this->hasHeader($name)) {
+          return $this->withHeader($name, $value);
+        }
+
+        $new = clone $this;
+        if (is_array($new->swooleRequest->header[$name])) {
+            $new->swooleRequest->header[$name][] = $value;
+        } else {
+            $new->swooleRequest->header[$name] = [
+                $new->swooleRequest->header[$name],
+                $value
+            ];
+        }
+
+        return $new;
     }
 
     public function withoutHeader($name)
     {
+        $new = clone $this;
+
+        if (!$new->hasHeader($name)) {
+            return $new;
+        }
+
+        foreach ($new->swooleRequest->header as $key => $value) {
+            if (strtolower($name) == strtolower($key)) {
+                unset($new->swooleRequest->header[$key]);
+                return $new;
+            }
+        }
     }
 
     public function getBody()
