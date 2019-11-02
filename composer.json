@@ -1,0 +1,29 @@
+{
+    "name": "inek/psr-swoole",
+    "authors": [
+        {
+            "name": "Ignacio El Kadre",
+            "email": "imefisto@gmail.com"
+        }
+    ],
+    "autoload": {
+      "psr-4": {
+        "Inek\\PsrSwoole\\": "src/"
+      }
+    },
+    "autoload-dev": {
+      "psr-4": {
+        "Inek\\PsrSwoole\\Tests\\": "tests/"
+      }
+    },
+    "require": {
+        "psr/http-message": "^1.0@dev"
+    },
+    "minimum-stability": "dev",
+    "require-dev": {
+        "phpunit/phpunit": "^8.5@dev"
+    },
+    "scripts": {
+      "test": "./vendor/bin/phpunit"
+    }
+}
