@@ -1,15 +1,16 @@
 <?php
 namespace Inek\PsrSwoole;
 
-use Psr\Http\Message\{RequestInterface,UriFactoryInterface,UriInterface,StreamInterface};
+use Psr\Http\Message\{RequestInterface,UriFactoryInterface,StreamFactoryInterface,UriInterface,StreamInterface};
 use Swoole\Http\Request as SwooleRequest;
 
 class Request implements RequestInterface
 {
-    public function __construct(SwooleRequest $swooleRequest, UriFactoryInterface $uriFactory)
+    public function __construct(SwooleRequest $swooleRequest, UriFactoryInterface $uriFactory, StreamFactoryInterface $streamFactory)
     {
         $this->swooleRequest = $swooleRequest;
         $this->uriFactory = $uriFactory;
+        $this->streamFactory = $streamFactory;
     }
 
     public function getRequestTarget()
@@ -194,9 +195,13 @@ class Request implements RequestInterface
 
     public function getBody()
     {
+        return $this->body ?? ($this->body = $this->streamFactory->createStream($this->swooleRequest->rawContent()));
     }
 
     public function withBody(StreamInterface $body)
     {
+        $new = clone $this;
+        $new->body = $body;
+        return $new;
     }
 }

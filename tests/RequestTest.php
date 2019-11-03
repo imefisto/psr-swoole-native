@@ -4,9 +4,9 @@ namespace Inek\PsrSwoole\Testing;
 use Inek\PsrSwoole\Request;
 use Swoole\Http\Request as SwooleRequest;
 use Nyholm\Psr7\Factory\Psr17Factory;
-use Nyholm\Psr7\Uri;
+use Nyholm\Psr7\{Uri,Stream};
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\UriInterface;
+use Psr\Http\Message\{UriInterface,StreamInterface};
 
 class RequestTest extends TestCase
 {
@@ -252,15 +252,42 @@ class RequestTest extends TestCase
         $this->assertFalse($new->hasHeader('foo'));
     }    
 
+    /**
+     * @test
+     */
     public function getBody()
     {
+        $post = [
+            'foo1' => 'bar1',
+            'foo2' => 'bar2',
+        ];
+
+        $request = $this->buildRequest('/', 'post', '', null, [], $post);
+        $this->assertInstanceOf(StreamInterface::class, $request->getBody());
+        $this->assertEquals(http_build_query($post), (string) $request->getBody());
     }    
 
+    /**
+     * @test
+     */
     public function withBody()
     {
+        $post1 = [
+            'foo1' => 'bar1',
+        ];
+
+        $post2 = [
+            'foo2' => 'bar2',
+        ];
+
+        $request = $this->buildRequest('/', 'post', '', null, [], $post1);
+        $newStream = Stream::create(http_build_query($post2));
+        $new = $request->withBody($newStream);
+
+        $this->assertEquals($newStream, $new->getBody());
     }    
 
-    private function buildRequest($uri, $method = 'get', $queryString = '', $userInfo = null, $headers = [])
+    private function buildRequest($uri, $method = 'get', $queryString = '', $userInfo = null, $headers = [], $post = null)
     {
         $swooleRequest = $this->getMockBuilder(SwooleRequest::class)->getMock();
         $swooleRequest->server = [
@@ -271,6 +298,7 @@ class RequestTest extends TestCase
         $swooleRequest->header = [
             'host' => 'localhost:9501'
         ];
+        $swooleRequest->post = $post;
 
         if (!empty($queryString)) {
             $swooleRequest->server['query_string'] = $queryString;
@@ -285,9 +313,24 @@ class RequestTest extends TestCase
             $headers
         );
 
+        $swooleRequest
+             ->expects($this->any())
+             ->method('rawContent')
+             ->willReturn($this->mockRawContent($swooleRequest));
+
         return new Request(
             $swooleRequest,
+            new Psr17Factory,
             new Psr17Factory
         );
+    }
+
+    private function mockRawContent($swooleRequest)
+    {
+        if (empty($swooleRequest->post)) {
+            return null;
+        }
+
+        return http_build_query($swooleRequest->post); 
     }
 }
