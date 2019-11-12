@@ -2,7 +2,6 @@
 namespace Inek\PsrSwoole\Testing;
 
 use Inek\PsrSwoole\Request;
-use Swoole\Http\Request as SwooleRequest;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\{Uri,Stream};
 use PHPUnit\Framework\TestCase;
@@ -10,6 +9,8 @@ use Psr\Http\Message\{UriInterface,StreamInterface};
 
 class RequestTest extends TestCase
 {
+    use SwooleRequestBuilderTrait;
+
     /**
      * @test
      */
@@ -267,6 +268,32 @@ class RequestTest extends TestCase
         $this->assertEquals(http_build_query($post), (string) $request->getBody());
     }    
 
+    // public function getBodyForMultipart()
+    // {
+    //     $header = [
+    //         'content-type' => 'multipart/form-data; boundary=27772a7aae4588ec693771234c40bc13',
+    //     ];
+
+    //     $post = [
+    //         'foo1' => 'bar1',
+    //         'foo2' => 'bar2',
+    //     ];
+
+    //     $file = __DIR__ . 'dummy.pdf';
+
+    //     $files = [
+    //         'file' => [
+    //             'name' => 'test.pdf',
+    //             'type' => 'application/pdf'
+    //             'tmp_name' => $file,
+    //             'error' => 0
+    //             'size' => filesize($file),
+    //         ]
+    //     ];
+
+    //     $request = $this->buildRequest('/', 'post', '', null, $header, $post);
+    // }    
+
     /**
      * @test
      */
@@ -289,48 +316,10 @@ class RequestTest extends TestCase
 
     private function buildRequest($uri, $method = 'get', $queryString = '', $userInfo = null, $headers = [], $post = null)
     {
-        $swooleRequest = $this->getMockBuilder(SwooleRequest::class)->getMock();
-        $swooleRequest->server = [
-            'request_method' => $method,
-            'request_uri' => $uri,
-            'server_protocol' => 'HTTP/1.1',
-        ];
-        $swooleRequest->header = [
-            'host' => 'localhost:9501'
-        ];
-        $swooleRequest->post = $post;
-
-        if (!empty($queryString)) {
-            $swooleRequest->server['query_string'] = $queryString;
-        }
-
-        if (!empty($userInfo)) {
-            $swooleRequest->header['authorization'] = 'Basic ' . base64_encode($userInfo);
-        }
-
-        $swooleRequest->header = array_merge(
-            $swooleRequest->header,
-            $headers
-        );
-
-        $swooleRequest
-             ->expects($this->any())
-             ->method('rawContent')
-             ->willReturn($this->mockRawContent($swooleRequest));
-
         return new Request(
-            $swooleRequest,
+            $this->buildSwooleRequest($uri, $method, $queryString, $userInfo, $headers, $post),
             new Psr17Factory,
             new Psr17Factory
         );
-    }
-
-    private function mockRawContent($swooleRequest)
-    {
-        if (empty($swooleRequest->post)) {
-            return null;
-        }
-
-        return http_build_query($swooleRequest->post); 
     }
 }

@@ -6,7 +6,10 @@ use Swoole\Http\Request as SwooleRequest;
 
 class Request implements RequestInterface
 {
-    public function __construct(SwooleRequest $swooleRequest, UriFactoryInterface $uriFactory, StreamFactoryInterface $streamFactory)
+    public function __construct(
+        SwooleRequest $swooleRequest,
+        UriFactoryInterface $uriFactory,
+        StreamFactoryInterface $streamFactory)
     {
         $this->swooleRequest = $swooleRequest;
         $this->uriFactory = $uriFactory;
@@ -195,7 +198,7 @@ class Request implements RequestInterface
 
     public function getBody()
     {
-        return $this->body ?? ($this->body = $this->streamFactory->createStream($this->swooleRequest->rawContent()));
+        return $this->body ?? $this->streamFactory->createStream($this->swooleRequest->rawContent());
     }
 
     public function withBody(StreamInterface $body)
