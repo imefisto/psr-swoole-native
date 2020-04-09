@@ -1,7 +1,11 @@
 <?php
 namespace Inek\PsrSwoole;
 
-use Psr\Http\Message\{RequestInterface,UriFactoryInterface,StreamFactoryInterface,UriInterface,StreamInterface};
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\UriFactoryInterface;
+use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\UriInterface;
+use Psr\Http\Message\StreamInterface;
 use Swoole\Http\Request as SwooleRequest;
 
 class Request implements RequestInterface
@@ -9,8 +13,8 @@ class Request implements RequestInterface
     public function __construct(
         SwooleRequest $swooleRequest,
         UriFactoryInterface $uriFactory,
-        StreamFactoryInterface $streamFactory)
-    {
+        StreamFactoryInterface $streamFactory
+    ) {
         $this->swooleRequest = $swooleRequest;
         $this->uriFactory = $uriFactory;
         $this->streamFactory = $streamFactory;
@@ -27,7 +31,7 @@ class Request implements RequestInterface
     private function buildRequestTarget()
     {
         $queryString = !empty($this->swooleRequest->server['query_string'])
-            ? '?' . $this->swooleRequest->server['query_string'] 
+            ? '?' . $this->swooleRequest->server['query_string']
             : ''
             ;
 
@@ -164,7 +168,7 @@ class Request implements RequestInterface
     public function withAddedHeader($name, $value)
     {
         if (!$this->hasHeader($name)) {
-          return $this->withHeader($name, $value);
+            return $this->withHeader($name, $value);
         }
 
         $new = clone $this;

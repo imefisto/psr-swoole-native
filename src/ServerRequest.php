@@ -1,7 +1,12 @@
 <?php
 namespace Inek\PsrSwoole;
 
-use Psr\Http\Message\{ServerRequestInterface,UriFactoryInterface,StreamFactoryInterface,UploadedFileFactoryInterface,UriInterface,StreamInterface};
+use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UploadedFileFactoryInterface;
+use Psr\Http\Message\UriFactoryInterface;
+use Psr\Http\Message\UriInterface;
 use Swoole\Http\Request as SwooleRequest;
 
 class ServerRequest extends Request implements ServerRequestInterface
@@ -12,8 +17,8 @@ class ServerRequest extends Request implements ServerRequestInterface
         SwooleRequest $swooleRequest,
         UriFactoryInterface $uriFactory,
         StreamFactoryInterface $streamFactory,
-        UploadedFileFactoryInterface $uploadedFileFactory)
-    {
+        UploadedFileFactoryInterface $uploadedFileFactory
+    ) {
         parent::__construct($swooleRequest, $uriFactory, $streamFactory);
         $this->uploadedFileFactory = $uploadedFileFactory;
     }

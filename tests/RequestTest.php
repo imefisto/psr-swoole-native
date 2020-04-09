@@ -3,9 +3,11 @@ namespace Inek\PsrSwoole\Testing;
 
 use Inek\PsrSwoole\Request;
 use Nyholm\Psr7\Factory\Psr17Factory;
-use Nyholm\Psr7\{Uri,Stream};
+use Nyholm\Psr7\Uri;
+use Nyholm\Psr7\Stream;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\{UriInterface,StreamInterface};
+use Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\UriInterface;
 
 class RequestTest extends TestCase
 {
@@ -26,10 +28,10 @@ class RequestTest extends TestCase
      */
     public function getRequestTargetOriginFormWithQueryParams()
     {
-        $uri = '/';
         $queryParams = 'foo=1&baz=2';
-        $request = $this->buildRequest($uri, 'get', $queryParams);
-        $this->assertEquals($uri . '?' . $queryParams, $request->getRequestTarget());
+        $request = $this->buildRequest();
+        $request->swooleRequest->server['query_string'] = $queryParams;
+        $this->assertEquals('/?' . $queryParams, $request->getRequestTarget());
     }
 
     /**
@@ -44,7 +46,7 @@ class RequestTest extends TestCase
 
         $new = $request->withRequestTarget($newTarget);
         $this->assertEquals($newTarget, $new->getRequestTarget());
-    }    
+    }
 
     /**
      * @test
@@ -55,31 +57,31 @@ class RequestTest extends TestCase
         $request = $this->buildRequest('/', $method);
 
         $this->assertEquals($method, $request->getMethod());
-    }    
+    }
 
     /**
      * @test
      */
     public function withMethod()
     {
-        $request = $this->buildRequest('/');
+        $request = $this->buildRequest();
 
         $newMethod = 'post';
         $new = $request->withMethod($newMethod);
         $this->assertEquals($newMethod, $new->getMethod());
-    }    
+    }
 
     /**
      * @test
      */
     public function withMethodCaseInsensitive()
     {
-        $request = $this->buildRequest('/');
+        $request = $this->buildRequest();
 
         $newMethod = 'POST';
         $new = $request->withMethod($newMethod);
         $this->assertEquals($newMethod, $new->getMethod());
-    }    
+    }
 
     /**
      * @test
@@ -87,7 +89,7 @@ class RequestTest extends TestCase
     public function withMethodThrowsExceptionForInvalidHTTPMethod()
     {
         $this->expectException(\InvalidArgumentException::class);
-        $request = $this->buildRequest('/');
+        $request = $this->buildRequest();
         $request->withMethod('FOO');
     }
 
@@ -96,45 +98,51 @@ class RequestTest extends TestCase
      */
     public function getUri()
     {
-        $request = $this->buildRequest('/foo', 'get', 'foo=1&bar=2', 'someuser:somepass');
+        $request = $this->buildRequest('/foo');
+        $queryString = 'foo=1&bar=2';
+        $request->swooleRequest->server['query_string'] = $queryString;
+
+        $userInfo = 'someuser:somepass';
+        $request->swooleRequest->header['authorization'] = 'Basic ' . base64_encode($userInfo);
+
         $this->assertInstanceOf(UriInterface::class, $request->getUri());
 
         $this->assertEquals('/foo', $request->getUri()->getPath());
-        $this->assertEquals('foo=1&bar=2', $request->getUri()->getQuery());
-        $this->assertEquals('someuser:somepass', $request->getUri()->getUserInfo());
+        $this->assertEquals($queryString, $request->getUri()->getQuery());
+        $this->assertEquals($userInfo, $request->getUri()->getUserInfo());
         $this->assertEquals('localhost', $request->getUri()->getHost());
         $this->assertEquals(9501, $request->getUri()->getPort());
-    }    
+    }
 
     /**
      * @test
      */
     public function withUri()
     {
-        $request = $this->buildRequest('/');
+        $request = $this->buildRequest();
         $newUri = new Uri('/new-uri');
         $new = $request->withUri($newUri);
         $this->assertEquals($newUri, $new->getUri());
-    }    
+    }
 
     /**
      * @test
      */
     public function getProtocolVersion()
     {
-        $request = $this->buildRequest('/');
+        $request = $this->buildRequest();
         $this->assertEquals('1.1', $request->getProtocolVersion());
-    }    
+    }
 
     /**
      * @test
      */
     public function withProtocolVersion()
     {
-        $request = $this->buildRequest('/');
+        $request = $this->buildRequest();
         $new = $request->withProtocolVersion('1.0');
         $this->assertEquals('1.0', $new->getProtocolVersion());
-    }    
+    }
 
     /**
      * @test
@@ -145,13 +153,14 @@ class RequestTest extends TestCase
             'foo' => 'bar',
         ];
 
-        $request = $this->buildRequest('/', 'get', '', null, $headers);
+        $request = $this->buildRequest();
+        $request->swooleRequest->header = $headers;
 
         $requestHeaders = $request->getHeaders();
         foreach ($headers as $name => $value) {
             $this->assertEquals($value, $requestHeaders[$name]);
         }
-    }    
+    }
 
     /**
      * @test
@@ -162,11 +171,13 @@ class RequestTest extends TestCase
             'foo' => 'bar',
         ];
 
-        $request = $this->buildRequest('/', 'get', '', null, $headers);
+        $request = $this->buildRequest();
+        $request->swooleRequest->header = $headers;
+
         $this->assertFalse($request->hasHeader('foox'));
         $this->assertTrue($request->hasHeader('foo'));
         $this->assertTrue($request->hasHeader('Foo'));
-    }    
+    }
 
     /**
      * @test
@@ -177,7 +188,9 @@ class RequestTest extends TestCase
             'foo' => 'bar',
         ];
 
-        $request = $this->buildRequest('/', 'get', '', null, $headers);
+        $request = $this->buildRequest();
+        $request->swooleRequest->header = $headers;
+
         $this->assertEquals(['bar'], $request->getHeader('foo'));
         $this->assertEquals(['bar'], $request->getHeader('Foo'));
 
@@ -193,37 +206,39 @@ class RequestTest extends TestCase
             'foo' => ['bar', 'bar2'],
         ];
 
-        $request = $this->buildRequest('/', 'get', '', null, $headers);
+        $request = $this->buildRequest();
+        $request->swooleRequest->header = $headers;
+
         $this->assertEquals('bar,bar2', $request->getHeaderLine('foo'));
         $this->assertEquals('bar,bar2', $request->getHeaderLine('Foo'));
         $this->assertEquals('', $request->getHeaderLine('foox'));
-    }    
+    }
 
     /**
      * @test
      */
     public function withHeader()
     {
-        $request = $this->buildRequest('/');
+        $request = $this->buildRequest();
         $new = $request->withHeader('foo', 'bar');
         $this->assertTrue($new->hasHeader('foo'));
         $this->assertTrue($new->hasHeader('Foo'));
         $this->assertEquals(['bar'], $new->getHeader('foo'));
         $this->assertEquals(['bar'], $new->getHeader('Foo'));
-    }    
+    }
 
     /**
      * @test
      */
     public function withAddedHeader()
     {
-        $request = $this->buildRequest('/')
+        $request = $this->buildRequest()
                         ->withAddedHeader('foo', 'bar');
         $this->assertEquals(['bar'], $request->getHeader('foo'));
 
         $new = $request->withAddedHeader('foo', 'bar2');
         $this->assertEquals(['bar', 'bar2'], $new->getHeader('foo'));
-    }    
+    }
 
     /**
      * @test
@@ -234,10 +249,12 @@ class RequestTest extends TestCase
             'foo' => ['bar', 'bar2'],
         ];
 
-        $request = $this->buildRequest('/', 'get', '', null, $headers);
+        $request = $this->buildRequest();
+        $request->swooleRequest->header = $headers;
+
         $new = $request->withoutHeader('foo');
         $this->assertFalse($new->hasHeader('foo'));
-    }    
+    }
 
     /**
      * @test
@@ -248,51 +265,29 @@ class RequestTest extends TestCase
             'foo' => ['bar', 'bar2'],
         ];
 
-        $request = $this->buildRequest('/', 'get', '', null, $headers);
+        $request = $this->buildRequest();
+        $request->swooleRequest->header = $headers;
+
         $new = $request->withoutHeader('fOo');
         $this->assertFalse($new->hasHeader('foo'));
-    }    
+    }
 
     /**
      * @test
      */
     public function getBody()
     {
-        $post = [
+        $postBody = [
             'foo1' => 'bar1',
             'foo2' => 'bar2',
         ];
 
-        $request = $this->buildRequest('/', 'post', '', null, [], $post);
+        $request = $this->buildRequest('/', 'post', $postBody);
+        $request->swooleRequest->post = $postBody;
+
         $this->assertInstanceOf(StreamInterface::class, $request->getBody());
-        $this->assertEquals(http_build_query($post), (string) $request->getBody());
-    }    
-
-    // public function getBodyForMultipart()
-    // {
-    //     $header = [
-    //         'content-type' => 'multipart/form-data; boundary=27772a7aae4588ec693771234c40bc13',
-    //     ];
-
-    //     $post = [
-    //         'foo1' => 'bar1',
-    //         'foo2' => 'bar2',
-    //     ];
-
-    //     $file = __DIR__ . 'dummy.pdf';
-
-    //     $files = [
-    //         'file' => [
-    //             'name' => 'test.pdf',
-    //             'type' => 'application/pdf'
-    //             'tmp_name' => $file,
-    //             'error' => 0
-    //             'size' => filesize($file),
-    //         ]
-    //     ];
-
-    //     $request = $this->buildRequest('/', 'post', '', null, $header, $post);
-    // }    
+        $this->assertEquals(http_build_query($postBody), (string) $request->getBody());
+    }
 
     /**
      * @test
@@ -307,17 +302,20 @@ class RequestTest extends TestCase
             'foo2' => 'bar2',
         ];
 
-        $request = $this->buildRequest('/', 'post', '', null, [], $post1);
+        $request = $this->buildRequest('/', 'post', $post1);
         $newStream = Stream::create(http_build_query($post2));
         $new = $request->withBody($newStream);
 
         $this->assertEquals($newStream, $new->getBody());
-    }    
+    }
 
-    private function buildRequest($uri, $method = 'get', $queryString = '', $userInfo = null, $headers = [], $post = null)
-    {
+    private function buildRequest(
+        $uri = '/',
+        $method = 'get',
+        $postBody = null
+    ) {
         return new Request(
-            $this->buildSwooleRequest($uri, $method, $queryString, $userInfo, $headers, $post),
+            $this->buildSwooleRequest($uri, $method, $postBody),
             new Psr17Factory,
             new Psr17Factory
         );

@@ -22,7 +22,7 @@ class ServerRequestTest extends TestCase
      */
     public function getServerParams()
     {
-        $request = $this->buildRequest('/');
+        $request = $this->buildRequest();
         $this->assertEquals($_SERVER, $request->getServerParams());
     }
 
@@ -36,7 +36,7 @@ class ServerRequestTest extends TestCase
             'name2' => 'value2',
         ];
 
-        $request = $this->buildRequest('/', 'get', null, null, [], null, $cookies);
+        $request = $this->buildRequest();
         $request->swooleRequest->cookie = $cookies;
 
         $this->assertEquals(count($request->getCookieParams()), count($cookies));
@@ -52,7 +52,7 @@ class ServerRequestTest extends TestCase
             'name2' => 'value2',
         ];
 
-        $request = $this->buildRequest('/');
+        $request = $this->buildRequest();
         $new = $request->withCookieParams($cookies);
 
         $this->assertEquals(count($new->getCookieParams()), count($cookies));
@@ -68,9 +68,7 @@ class ServerRequestTest extends TestCase
             'name2' => 'value2',
         ];
 
-        // TODO: atributo get de swoole request se genera a partir de queryParams. corregir mock
-
-        $request = $this->buildRequest('/');
+        $request = $this->buildRequest();
         $request->swooleRequest->get = $queryParams;
 
         $this->assertEquals($queryParams, $request->getQueryParams());
@@ -86,7 +84,7 @@ class ServerRequestTest extends TestCase
             'name2' => 'value2',
         ];
 
-        $request = $this->buildRequest('/');
+        $request = $this->buildRequest();
         $new = $request->withQueryParams($queryParams);
         $this->assertEquals($queryParams, $new->getQueryParams());
     }
@@ -124,7 +122,7 @@ class ServerRequestTest extends TestCase
      */
     public function withUploadedFiles()
     {
-        $request = $this->buildRequest('/');
+        $request = $this->buildRequest();
         $filepath = __DIR__ . '/dummy.pdf';
         $new = $request->withUploadedFiles([
             $this->uploadedFileFactory->createUploadedFile(
@@ -203,7 +201,7 @@ class ServerRequestTest extends TestCase
      */
     public function getAttributesEmpty()
     {
-        $request = $this->buildRequest('/');
+        $request = $this->buildRequest();
         $this->assertEquals([], $request->getAttributes());
     }
 
@@ -212,7 +210,7 @@ class ServerRequestTest extends TestCase
      */
     public function getAttributes()
     {
-        $request = $this->buildRequest('/')->withAttribute('test', 1);
+        $request = $this->buildRequest()->withAttribute('test', 1);
         $this->assertEquals(['test' => 1], $request->getAttributes());
     }
 
@@ -221,7 +219,7 @@ class ServerRequestTest extends TestCase
      */
     public function getAttribute()
     {
-        $request = $this->buildRequest('/')->withAttribute('test', 1);
+        $request = $this->buildRequest()->withAttribute('test', 1);
         $this->assertEquals(1, $request->getAttribute('test'));
     }
 
@@ -230,7 +228,7 @@ class ServerRequestTest extends TestCase
      */
     public function getAttributeWithDefault()
     {
-        $request = $this->buildRequest('/');
+        $request = $this->buildRequest();
         $this->assertEquals(1, $request->getAttribute('test', 1));
     }
 
@@ -239,7 +237,7 @@ class ServerRequestTest extends TestCase
      */
     public function withoutAttribute()
     {
-        $request = $this->buildRequest('/')->withAttribute('test', 1);
+        $request = $this->buildRequest()->withAttribute('test', 1);
         $new = $request->withoutAttribute('test');
         $this->assertEquals([], $new->getAttributes());
     }
@@ -249,15 +247,17 @@ class ServerRequestTest extends TestCase
      */
     public function withoutAttributeInexistent()
     {
-        $request = $this->buildRequest('/');
+        $request = $this->buildRequest();
         $new = $request->withoutAttribute('test');
         $this->assertEquals([], $new->getAttributes());
     }
 
-    private function buildRequest($uri, $method = 'get', $queryString = '', $userInfo = null, $headers = [], $post = null)
-    {
+    private function buildRequest(
+        $uri = '/',
+        $method = 'get'
+    ) {
         return new ServerRequest(
-            $this->buildSwooleRequest($uri, $method, $queryString, $userInfo, $headers, $post),
+            $this->buildSwooleRequest($uri, $method),
             $this->uriFactory,
             $this->streamFactory,
             $this->uploadedFileFactory
