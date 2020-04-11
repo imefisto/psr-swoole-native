@@ -1,5 +1,5 @@
 {
-    "name": "inek/psr-swoole-native",
+    "name": "imefisto/psr-swoole-native",
     "authors": [
         {
             "name": "Ignacio El Kadre",
@@ -8,12 +8,12 @@
     ],
     "autoload": {
       "psr-4": {
-        "Inek\\PsrSwoole\\": "src/"
+        "Imefisto\\PsrSwoole\\": "src/"
       }
     },
     "autoload-dev": {
       "psr-4": {
-        "Inek\\PsrSwoole\\Testing\\": "tests/"
+        "Imefisto\\PsrSwoole\\Testing\\": "tests/"
       }
     },
     "require": {

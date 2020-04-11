@@ -1,6 +1,6 @@
 <?php
-use Inek\PsrSwoole\Request as PsrRequest;
-use Inek\PsrSwoole\ResponseMerger;
+use Imefisto\PsrSwoole\Request as PsrRequest;
+use Imefisto\PsrSwoole\ResponseMerger;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Swoole\Http\Request;
 use Swoole\Http\Response;

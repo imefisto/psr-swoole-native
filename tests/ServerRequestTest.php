@@ -1,8 +1,8 @@
 <?php
-namespace Inek\PsrSwoole\Testing;
+namespace Imefisto\PsrSwoole\Testing;
 
 use PHPUnit\Framework\TestCase;
-use Inek\PsrSwoole\ServerRequest;
+use Imefisto\PsrSwoole\ServerRequest;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\UploadedFileInterface;
 

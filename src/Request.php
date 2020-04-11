@@ -1,5 +1,5 @@
 <?php
-namespace Inek\PsrSwoole;
+namespace Imefisto\PsrSwoole;
 
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriFactoryInterface;

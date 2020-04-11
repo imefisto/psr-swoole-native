@@ -1,11 +1,11 @@
 <?php
-namespace Inek\PsrSwoole\Testing;
+namespace Imefisto\PsrSwoole\Testing;
 
 use PHPUnit\Framework\TestCase;
 use Swoole\Http\Response;
 use Psr\Http\Message\ResponseInterface;
 
-use Inek\PsrSwoole\ResponseMerger;
+use Imefisto\PsrSwoole\ResponseMerger;
 
 class ResponseMergerTest extends TestCase
 {
