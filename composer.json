@@ -6,6 +6,7 @@
             "email": "imefisto@gmail.com"
         }
     ],
+    "license": "MIT",
     "autoload": {
       "psr-4": {
         "Imefisto\\PsrSwoole\\": "src/"
@@ -29,6 +30,5 @@
       "test": "./vendor/bin/phpunit",
       "sniff": "phpcs -p --standard=PSR2 --runtime-set ignore_errors_on_exit 1 --runtime-set ignore_warnings_on_exit 1 src tests examples",
       "format": "phpcbf -p --standard=PSR2 --runtime-set ignore_errors_on_exit 1 --runtime-set ignore_warnings_on_exit 1 src tests examples"
-      
     }
 }
