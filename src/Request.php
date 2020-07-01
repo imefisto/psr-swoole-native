@@ -149,13 +149,7 @@ class Request implements RequestInterface
     
     public function getHeaderLine($name)
     {
-        foreach ($this->swooleRequest->header as $key => $value) {
-            if (strtolower($name) == strtolower($key)) {
-                return implode(',', $value);
-            }
-        }
-
-        return '';
+        return \implode(',', $this->getHeader($name));
     }
 
     public function withHeader($name, $value)

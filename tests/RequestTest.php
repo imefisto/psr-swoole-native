@@ -203,6 +203,22 @@ class RequestTest extends TestCase
     public function getHeaderLine()
     {
         $headers = [
+            'foo' => 'bar',
+        ];
+
+        $request = $this->buildRequest();
+        $request->swooleRequest->header = $headers;
+
+        $this->assertEquals('bar', $request->getHeaderLine('foo'));
+        $this->assertEquals('bar', $request->getHeaderLine('Foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getHeaderLineWithArray()
+    {
+        $headers = [
             'foo' => ['bar', 'bar2'],
         ];
 
