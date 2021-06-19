@@ -27,7 +27,8 @@
         "nyholm/psr7": "^1.0"
     },
     "scripts": {
-      "test": "./vendor/bin/phpunit",
+      "test": "./vendor/bin/phpunit --configuration phpunit.xml",
+      "test:coverage": "./vendor/bin/phpunit --configuration phpunit.xml --coverage-clover build/logs/clover.xml --log-junit build/logs/junit.xml --coverage-html build/coverage",
       "sniff": "phpcs -p --standard=PSR2 --runtime-set ignore_errors_on_exit 1 --runtime-set ignore_warnings_on_exit 1 src tests examples",
       "format": "phpcbf -p --standard=PSR2 --runtime-set ignore_errors_on_exit 1 --runtime-set ignore_warnings_on_exit 1 src tests examples"
     }
