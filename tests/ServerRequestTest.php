@@ -170,13 +170,42 @@ class ServerRequestTest extends TestCase
     /**
      * @test
      */
-    public function withParsedBody()
+    public function withParsedBodyWithArrayAsArgument()
     {
         $request = $this->buildRequest('/', 'post');
         $request->swooleRequest->post = [
             'test' => 1
         ];
         $newPost = ['test' => 2];
+        $new = $request->withParsedBody($newPost);
+        $this->assertEquals($newPost, $new->getParsedBody());
+    }
+
+    /**
+     * @test
+     */
+    public function withParsedBodyWithObjectAsArgument()
+    {
+        $request = $this->buildRequest('/', 'post');
+        $request->swooleRequest->post = [
+            'test' => 1
+        ];
+        $newPost = new \stdclass;
+        $newPost->test = 2;
+        $new = $request->withParsedBody($newPost);
+        $this->assertEquals($newPost, $new->getParsedBody());
+    }
+
+    /**
+     * @test
+     */
+    public function withParsedBodyWithNullAsArgument()
+    {
+        $request = $this->buildRequest('/', 'post');
+        $request->swooleRequest->post = [
+            'test' => 1
+        ];
+        $newPost = null;
         $new = $request->withParsedBody($newPost);
         $this->assertEquals($newPost, $new->getParsedBody());
     }

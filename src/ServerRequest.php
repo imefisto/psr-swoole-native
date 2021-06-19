@@ -82,7 +82,7 @@ class ServerRequest extends Request implements ServerRequestInterface
 
     public function getParsedBody()
     {
-        if (!empty($this->parsedBody)) {
+        if (property_exists($this, 'parsedBody')) {
             return $this->parsedBody;
         }
         
@@ -95,7 +95,7 @@ class ServerRequest extends Request implements ServerRequestInterface
 
     public function withParsedBody($data)
     {
-        if (!is_object($data) && !is_array($data)) {
+        if (!\is_object($data) && !\is_array($data) && !\is_null($data)) {
             throw new \InvalidArgumentException('Unsupported argument type');
         }
 
