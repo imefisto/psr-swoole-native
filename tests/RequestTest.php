@@ -70,10 +70,13 @@ class RequestTest extends TestCase
     {
         $request = $this->buildRequest();
 
-        $newMethod = 'post';
-        $new = $request->withMethod($newMethod);
-        $this->assertEquals($newMethod, $new->getMethod());
-        $this->assertImmutabililty($request, $new);
+        $validMethods = ['options', 'get', 'head', 'post', 'put', 'delete', 'trace', 'connect'];
+
+        foreach ($validMethods as $newMethod) {
+            $new = $request->withMethod($newMethod);
+            $this->assertEquals($newMethod, $new->getMethod());
+            $this->assertImmutabililty($request, $new);
+        }
     }
 
     /**
