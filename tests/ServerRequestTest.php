@@ -60,6 +60,7 @@ class ServerRequestTest extends TestCase
         $new = $request->withCookieParams($cookies);
 
         $this->assertEquals(count($new->getCookieParams()), count($cookies));
+        $this->assertImmutabililty($request, $new);
     }
 
     /**
@@ -91,6 +92,7 @@ class ServerRequestTest extends TestCase
         $request = $this->buildRequest();
         $new = $request->withQueryParams($queryParams);
         $this->assertEquals($queryParams, $new->getQueryParams());
+        $this->assertImmutabililty($request, $new);
     }
 
     /**
@@ -147,6 +149,8 @@ class ServerRequestTest extends TestCase
             $this->assertEquals(0, $file->getError());
             $this->assertEquals(filesize($filepath), $file->getSize());
         }
+
+        $this->assertImmutabililty($request, $new);
     }
 
     /**
@@ -183,6 +187,7 @@ class ServerRequestTest extends TestCase
         $newPost = ['test' => 2];
         $new = $request->withParsedBody($newPost);
         $this->assertEquals($newPost, $new->getParsedBody());
+        $this->assertImmutabililty($request, $new);
     }
 
     /**
@@ -268,11 +273,23 @@ class ServerRequestTest extends TestCase
     /**
      * @test
      */
+    public function withAttribute()
+    {
+        $request = $this->buildRequest();
+        $new = $request->withAttribute('test', 1);
+        $this->assertEquals(['test' => 1], $new->getAttributes());
+        $this->assertImmutabililty($request, $new);
+    }
+
+    /**
+     * @test
+     */
     public function withoutAttribute()
     {
         $request = $this->buildRequest()->withAttribute('test', 1);
         $new = $request->withoutAttribute('test');
         $this->assertEquals([], $new->getAttributes());
+        $this->assertImmutabililty($request, $new);
     }
 
     /**
@@ -295,5 +312,10 @@ class ServerRequestTest extends TestCase
             $this->streamFactory,
             $this->uploadedFileFactory
         );
+    }
+
+    private function assertImmutabililty($obj1, $obj2)
+    {
+        $this->assertNotSame($obj1, $obj2);
     }
 }

@@ -49,6 +49,7 @@ class RequestTest extends TestCase
 
         $new = $request->withRequestTarget($newTarget);
         $this->assertEquals($newTarget, $new->getRequestTarget());
+        $this->assertImmutabililty($request, $new);
     }
 
     /**
@@ -72,6 +73,7 @@ class RequestTest extends TestCase
         $newMethod = 'post';
         $new = $request->withMethod($newMethod);
         $this->assertEquals($newMethod, $new->getMethod());
+        $this->assertImmutabililty($request, $new);
     }
 
     /**
@@ -126,6 +128,7 @@ class RequestTest extends TestCase
         $newUri = new Uri('/new-uri');
         $new = $request->withUri($newUri);
         $this->assertEquals($newUri, $new->getUri());
+        $this->assertImmutabililty($request, $new);
     }
 
     /**
@@ -145,6 +148,7 @@ class RequestTest extends TestCase
         $request = $this->buildRequest();
         $new = $request->withProtocolVersion('1.0');
         $this->assertEquals('1.0', $new->getProtocolVersion());
+        $this->assertImmutabililty($request, $new);
     }
 
     /**
@@ -244,6 +248,7 @@ class RequestTest extends TestCase
         $this->assertTrue($new->hasHeader('Foo'));
         $this->assertEquals(['bar'], $new->getHeader('foo'));
         $this->assertEquals(['bar'], $new->getHeader('Foo'));
+        $this->assertImmutabililty($request, $new);
     }
 
     /**
@@ -257,6 +262,7 @@ class RequestTest extends TestCase
 
         $new = $request->withAddedHeader('foo', 'bar2');
         $this->assertEquals(['bar', 'bar2'], $new->getHeader('foo'));
+        $this->assertImmutabililty($request, $new);
     }
 
     /**
@@ -273,6 +279,7 @@ class RequestTest extends TestCase
 
         $new = $request->withoutHeader('foo');
         $this->assertFalse($new->hasHeader('foo'));
+        $this->assertImmutabililty($request, $new);
     }
 
     /**
@@ -326,6 +333,7 @@ class RequestTest extends TestCase
         $new = $request->withBody($newStream);
 
         $this->assertEquals($newStream, $new->getBody());
+        $this->assertImmutabililty($request, $new);
     }
 
     private function buildRequest(
@@ -338,5 +346,10 @@ class RequestTest extends TestCase
             new Psr17Factory,
             new Psr17Factory
         );
+    }
+
+    private function assertImmutabililty($obj1, $obj2)
+    {
+        $this->assertNotSame($obj1, $obj2);
     }
 }
