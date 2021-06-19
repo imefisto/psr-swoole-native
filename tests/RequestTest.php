@@ -9,6 +9,9 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 
+/**
+ * @covers Imefisto\PsrSwoole\Request
+ */
 class RequestTest extends TestCase
 {
     use SwooleRequestBuilderTrait;

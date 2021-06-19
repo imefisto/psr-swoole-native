@@ -6,6 +6,10 @@ use Imefisto\PsrSwoole\ServerRequest;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\UploadedFileInterface;
 
+/**
+ * @covers Imefisto\PsrSwoole\Request
+ * @covers Imefisto\PsrSwoole\ServerRequest
+ */
 class ServerRequestTest extends TestCase
 {
     use SwooleRequestBuilderTrait;

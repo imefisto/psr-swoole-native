@@ -7,6 +7,9 @@ use Psr\Http\Message\ResponseInterface;
 
 use Imefisto\PsrSwoole\ResponseMerger;
 
+/**
+ * @covers Imefisto\PsrSwoole\ResponseMerger
+ */
 class ResponseMergerTest extends TestCase
 {
     public function setUp(): void
