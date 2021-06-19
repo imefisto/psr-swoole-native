@@ -114,10 +114,10 @@ class ServerRequestTest extends TestCase
 
         foreach ($request->getUploadedFiles() as $file) {
             $this->assertInstanceOf(UploadedFileInterface::class, $file);
-            $this->assertEquals($file->getClientFilename(), 'dummy.pdf');
-            $this->assertEquals($file->getClientMediaType(), 'application/pdf');
-            $this->assertEquals($file->getError(), 0);
-            $this->assertEquals($file->getSize(), filesize($filepath));
+            $this->assertEquals('dummy.pdf', $file->getClientFilename());
+            $this->assertEquals('application/pdf', $file->getClientMediaType());
+            $this->assertEquals(0, $file->getError());
+            $this->assertEquals(filesize($filepath), $file->getSize());
         }
     }
 
@@ -142,10 +142,10 @@ class ServerRequestTest extends TestCase
 
         foreach ($new->getUploadedFiles() as $file) {
             $this->assertInstanceOf(UploadedFileInterface::class, $file);
-            $this->assertEquals($file->getClientFilename(), 'dummy.pdf');
-            $this->assertEquals($file->getClientMediaType(), 'application/pdf');
-            $this->assertEquals($file->getError(), 0);
-            $this->assertEquals($file->getSize(), filesize($filepath));
+            $this->assertEquals('dummy.pdf', $file->getClientFilename());
+            $this->assertEquals('application/pdf', $file->getClientMediaType());
+            $this->assertEquals(0, $file->getError());
+            $this->assertEquals(filesize($filepath), $file->getSize());
         }
     }
 
