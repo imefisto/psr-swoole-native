@@ -106,7 +106,7 @@ class ResponseMergerTest extends TestCase
         $this->body->expects($this->any())->method('getSize')->willReturn(0);
 
         // named pipe (http://www.manpagez.com/man/2/stat/)
-        $namedPipe = ['mode' => 4480];
+        $namedPipe = ['mode' => 0010600];
         $this->body->expects($this->any())
                    ->method('getMetadata')->willReturn($namedPipe);
 

@@ -88,6 +88,6 @@ class ResponseMerger
     private function isPipe($resource)
     {
         $stat = fstat($resource);
-        return (isset($stat['mode']) && ($stat['mode'] & self::FSTAT_MODE_S_IFIFO) !== 0);
+        return ($stat['mode'] & self::FSTAT_MODE_S_IFIFO) === self::FSTAT_MODE_S_IFIFO;
     }
 }
