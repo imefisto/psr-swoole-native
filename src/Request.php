@@ -133,7 +133,7 @@ class Request implements RequestInterface
     public function hasHeader($name)
     {
         foreach ($this->swooleRequest->header as $key => $value) {
-            if (strtolower($name) == strtolower($key)) {
+            if (strtolower($name) == $key) {
                 return true;
             }
         }
@@ -148,7 +148,7 @@ class Request implements RequestInterface
         }
 
         foreach ($this->swooleRequest->header as $key => $value) {
-            if (strtolower($name) == strtolower($key)) {
+            if (strtolower($name) == $key) {
                 return is_array($value)
                     ? $value
                     : [$value]
@@ -197,7 +197,7 @@ class Request implements RequestInterface
         }
 
         foreach ($new->swooleRequest->header as $key => $value) {
-            if (strtolower($name) == strtolower($key)) {
+            if (strtolower($name) == $key) {
                 unset($new->swooleRequest->header[$key]);
                 return $new;
             }
