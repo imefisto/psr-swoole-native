@@ -129,7 +129,9 @@ class Request implements RequestInterface
 
     public function getHeaders()
     {
-        return $this->swooleRequest->header;
+        return is_array($this->headers)
+            ? $this->headers
+            : $this->swooleRequest->header;
     }
 
     public function hasHeader($name)

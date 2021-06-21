@@ -334,9 +334,21 @@ class RequestTest extends TestCase
         $this->assertTrue($new->hasHeader('Foo'));
         $this->assertEquals(['bar'], $new->getHeader('foo'));
         $this->assertEquals(['bar'], $new->getHeader('Foo'));
+        $this->assertNotEquals($request->getHeaders(), $new->getHeaders());
+    }
+
+    /**
+     * @test
+     */
+    public function withHeaderPreservesImmutability()
+    {
+        $request = $this->buildRequest();
+        $originalHeaders = $request->getHeaders();
+        $new = $request->withHeader('foo', 'bar');
 
         $this->assertImmutabililty($request, $new);
         $this->assertFalse($request->hasHeader('foo'));
+        $this->assertEquals($originalHeaders, $request->getHeaders());
     }
 
     /**
