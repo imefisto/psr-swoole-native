@@ -107,13 +107,19 @@ class ResponseMergerTest extends TestCase
 
         // named pipe (http://www.manpagez.com/man/2/stat/)
         $namedPipe = ['mode' => 4480];
-        $this->body->expects($this->any())->method('getMetadata')->willReturn($namedPipe);
+        $this->body->expects($this->any())
+                   ->method('getMetadata')->willReturn($namedPipe);
 
-        $this->body->expects($this->any())->method('detach')->willReturn(
-            popen('php -r "echo str_repeat(\'x\', 10000);"', 'r')
-        );
+        $this->body->expects($this->any())
+                   ->method('detach')->willReturn(
+                       popen('php -r "echo str_repeat(\'x\', 16384);"', 'r')
+                   );
 
-        $this->swooleResponse->expects($writeSpy = $this->atLeastOnce())->method('write');
+        $this->swooleResponse->expects($writeSpy = $this->atLeastOnce())
+                             ->method('write')
+                             ->with($this->callback(function ($contents) {
+                                 return strlen($contents) == ResponseMerger::BUFFER_SIZE;
+                             }));
 
         $this->responseMerger->toSwoole($this->psrResponse, $this->swooleResponse);
     }

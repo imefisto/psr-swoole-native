@@ -8,6 +8,7 @@ use Dflydev\FigCookies\SetCookies;
 class ResponseMerger
 {
     const FSTAT_MODE_S_IFIFO = 0010000;
+    const BUFFER_SIZE = 8192;
     
     public function toSwoole(ResponseInterface $psrResponse, Response $swooleResponse): Response
     {
@@ -77,7 +78,7 @@ class ResponseMerger
 
         if ($this->isPipe($resource)) {
             while (!feof($resource)) {
-                $buff = fread($resource, 8192);
+                $buff = fread($resource, self::BUFFER_SIZE);
                 !empty($buff) && $swooleResponse->write($buff);
             }
             pclose($resource);
