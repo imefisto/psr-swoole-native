@@ -128,9 +128,92 @@ class RequestTest extends TestCase
     public function withUri()
     {
         $request = $this->buildRequest();
-        $newUri = new Uri('/new-uri');
+        $newUri = new Uri('http://example.com/new-uri');
         $new = $request->withUri($newUri);
         $this->assertEquals($newUri, $new->getUri());
+        $this->assertImmutabililty($request, $new);
+    }
+
+    /**
+     * @test
+     */
+    public function withUriByDefaultMustSetHostHeaderFromURI()
+    {
+        $request = $this->buildRequest()->withoutHeader('host');
+        $newUri = new Uri('http://example.com/new-uri');
+        $new = $request->withUri($newUri);
+
+        $this->assertEquals($newUri->getHost(), $new->getHeader('host')[0]);
+        $this->assertImmutabililty($request, $new);
+    }
+
+    /**
+     * @test
+     */
+    public function withUriByDefaultMustChangeHostHeaderFromURI()
+    {
+        $request = $this->buildRequest()->withHeader('host', 'test.com');
+        $newUri = new Uri('http://example.com/new-uri');
+        $new = $request->withUri($newUri);
+
+        $this->assertEquals($newUri->getHost(), $new->getHeader('host')[0]);
+        $this->assertImmutabililty($request, $new);
+    }
+
+    /**
+     * @test
+     */
+    public function withUriMustNotUpdateHostHeaderIfUriHasNotHost()
+    {
+        $host = 'test.com';
+        $request = $this->buildRequest()->withHeader('host', $host);
+        $newUri = new Uri('/new-uri');
+        $new = $request->withUri($newUri);
+
+        $this->assertEquals($host, $new->getHeader('host')[0]);
+        $this->assertImmutabililty($request, $new);
+    }
+
+    /**
+     * @test
+     */
+    public function withUriWithPreserveHostMustUpdateHostHeaderIfEmpty()
+    {
+        $request = $this->buildRequest()->withoutHeader('host');
+        $newUri = new Uri('http://example.com/new-uri');
+        $new = $request->withUri($newUri, true);
+
+        $this->assertEquals($newUri->getHost(), $new->getHeader('host')[0]);
+        $this->assertImmutabililty($request, $new);
+    }
+
+    /**
+     * @test
+     */
+    public function withUriWithPreserveHostMustNotUpdateHostIfUriHostIsEmpty()
+    {
+        $request = $this->buildRequest()->withoutHeader('host');
+        $newUri = new Uri('/new-uri');
+        $new = $request->withUri($newUri, true);
+
+        $this->assertFalse($new->hasHeader('host'));
+        $this->assertImmutabililty($request, $new);
+    }
+
+    /**
+     * @test
+     */
+    public function withUriWithPreserveHostMustNotUpdateHostHeader()
+    {
+        $expectedHost = 'test.com';
+        $request = $this->buildRequest()->withHeader('host', $expectedHost);
+        $newUri = new Uri('http://example.com/new-uri');
+        $new = $request->withUri($newUri, true);
+
+        $this->assertEquals(
+            $expectedHost,
+            $new->getHeader('host')[0]
+        );
         $this->assertImmutabililty($request, $new);
     }
 

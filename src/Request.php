@@ -100,7 +100,17 @@ class Request implements RequestInterface
     {
         $new = clone $this;
         $new->uri = $uri;
-        return $new;
+
+        return $new->shouldUpdateHostHeader($preserveHost)
+            ? $new->withHeader('host', $uri->getHost())
+            : $new
+            ;
+    }
+
+    private function shouldUpdateHostHeader($preserveHost)
+    {
+        return !empty($this->uri->getHost())
+            && (!$preserveHost || !$this->hasHeader('host'));
     }
 
     public function getProtocolVersion()
