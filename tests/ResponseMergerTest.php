@@ -110,10 +110,9 @@ class ResponseMergerTest extends TestCase
         $this->body->expects($this->any())
                    ->method('getMetadata')->willReturn($namedPipe);
 
+        $expectedProcess = popen('php -r "echo str_repeat(\'x\', 16384);"', 'r');
         $this->body->expects($this->any())
-                   ->method('detach')->willReturn(
-                       popen('php -r "echo str_repeat(\'x\', 16384);"', 'r')
-                   );
+                   ->method('detach')->willReturn($expectedProcess);
 
         $this->swooleResponse->expects($writeSpy = $this->atLeastOnce())
                              ->method('write')
@@ -122,6 +121,7 @@ class ResponseMergerTest extends TestCase
                              }));
 
         $this->responseMerger->toSwoole($this->psrResponse, $this->swooleResponse);
+        $this->assertEquals('Unknown', get_resource_type($expectedProcess));
     }
 
     /**
