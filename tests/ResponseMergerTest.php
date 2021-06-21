@@ -85,7 +85,7 @@ class ResponseMergerTest extends TestCase
      */
     public function bodyContentGetsCopiedIfNotEmpty()
     {
-        $this->body->expects($this->once())->method('getSize')->willReturn(3);
+        $this->body->expects($this->once())->method('getSize')->willReturn(1);
         $this->body->expects($this->once())->method('isSeekable')->willReturn(true);
         $this->body->expects($rewindSpy = $this->once())->method('rewind')->willReturn(null);
         $this->body->expects($this->once())->method('rewind')->willReturn(null);
