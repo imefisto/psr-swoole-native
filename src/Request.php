@@ -180,6 +180,8 @@ class Request implements RequestInterface
     public function withHeader($name, $value)
     {
         $new = clone $this;
+        $new->initHeadersList();
+
         $new->headers[$name] = $value;
 
         return $new;

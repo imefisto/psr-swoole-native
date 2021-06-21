@@ -340,6 +340,22 @@ class RequestTest extends TestCase
     /**
      * @test
      */
+    public function withHeaderPreservesPreviousHeaders()
+    {
+        $request = $this->buildRequest();
+        $expectedHeaders = array_keys($request->getHeaders());
+        $expectedHeaders[] = 'foo';
+
+        $new = $request->withHeader('foo', 'bar');
+        $this->assertEquals(
+            $expectedHeaders,
+            array_keys($new->getHeaders())
+        );
+    }
+
+    /**
+     * @test
+     */
     public function withHeaderPreservesImmutability()
     {
         $request = $this->buildRequest();
