@@ -10,6 +10,8 @@ use Swoole\Http\Request as SwooleRequest;
 
 class Request implements RequestInterface
 {
+    private $headers = null;
+
     public function __construct(
         SwooleRequest $swooleRequest,
         UriFactoryInterface $uriFactory,
@@ -132,7 +134,9 @@ class Request implements RequestInterface
 
     public function hasHeader($name)
     {
-        foreach ($this->swooleRequest->header as $key => $value) {
+        $this->initHeadersList();
+
+        foreach ($this->headers as $key => $value) {
             if (strtolower($name) == $key) {
                 return true;
             }
@@ -141,13 +145,22 @@ class Request implements RequestInterface
         return false;
     }
 
+    private function initHeadersList()
+    {
+        if (is_array($this->headers)) {
+            return;
+        }
+
+        $this->headers = $this->swooleRequest->header;
+    }
+
     public function getHeader($name)
     {
         if (!$this->hasHeader($name)) {
             return [];
         }
 
-        foreach ($this->swooleRequest->header as $key => $value) {
+        foreach ($this->headers as $key => $value) {
             if (strtolower($name) == $key) {
                 return is_array($value)
                     ? $value
@@ -165,7 +178,8 @@ class Request implements RequestInterface
     public function withHeader($name, $value)
     {
         $new = clone $this;
-        $new->swooleRequest->header[$name] = $value;
+        $new->headers[$name] = $value;
+
         return $new;
     }
 
@@ -176,11 +190,12 @@ class Request implements RequestInterface
         }
 
         $new = clone $this;
-        if (is_array($new->swooleRequest->header[$name])) {
-            $new->swooleRequest->header[$name][] = $value;
+
+        if (is_array($new->headers[$name])) {
+            $new->headers[$name][] = $value;
         } else {
-            $new->swooleRequest->header[$name] = [
-                $new->swooleRequest->header[$name],
+            $new->headers[$name] = [
+                $new->headers[$name],
                 $value
             ];
         }
@@ -196,9 +211,9 @@ class Request implements RequestInterface
             return $new;
         }
 
-        foreach ($new->swooleRequest->header as $key => $value) {
+        foreach ($new->headers as $key => $value) {
             if (strtolower($name) == $key) {
-                unset($new->swooleRequest->header[$key]);
+                unset($new->headers[$key]);
                 return $new;
             }
         }

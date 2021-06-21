@@ -334,21 +334,36 @@ class RequestTest extends TestCase
         $this->assertTrue($new->hasHeader('Foo'));
         $this->assertEquals(['bar'], $new->getHeader('foo'));
         $this->assertEquals(['bar'], $new->getHeader('Foo'));
+
         $this->assertImmutabililty($request, $new);
+        $this->assertFalse($request->hasHeader('foo'));
     }
 
     /**
      * @test
      */
-    public function withAddedHeader()
+    public function withAddedHeaderSetsNewHeader()
+    {
+        $request = $this->buildRequest();
+        $new = $request->withAddedHeader('foo', 'bar');
+
+        $this->assertEquals(['bar'], $new->getHeader('foo'));
+        $this->assertImmutabililty($request, $new);
+        $this->assertFalse($request->hasHeader('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function withAddedHeaderAddsToPreviousHeader()
     {
         $request = $this->buildRequest()
                         ->withAddedHeader('foo', 'bar');
-        $this->assertEquals(['bar'], $request->getHeader('foo'));
 
         $new = $request->withAddedHeader('foo', 'bar2');
         $this->assertEquals(['bar', 'bar2'], $new->getHeader('foo'));
         $this->assertImmutabililty($request, $new);
+        $this->assertEquals(['bar'], $request->getHeader('foo'));
     }
 
     /**
@@ -366,6 +381,7 @@ class RequestTest extends TestCase
         $new = $request->withoutHeader('foo');
         $this->assertFalse($new->hasHeader('foo'));
         $this->assertImmutabililty($request, $new);
+        $this->assertEquals($headers['foo'], $request->getHeader('foo'));
     }
 
     /**
