@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 ### Fixed
-- Fixed immutability
+- Fixed bugs from immutability
+- Fixed withHeader must preserve casing
 
 ## [0.0.6] - 2021-06-21
 ### Added

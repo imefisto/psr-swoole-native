@@ -139,7 +139,7 @@ class Request implements RequestInterface
         $this->initHeadersList();
 
         foreach ($this->headers as $key => $value) {
-            if (strtolower($name) == $key) {
+            if (strtolower($name) == strtolower($key)) {
                 return true;
             }
         }
@@ -163,7 +163,7 @@ class Request implements RequestInterface
         }
 
         foreach ($this->headers as $key => $value) {
-            if (strtolower($name) == $key) {
+            if (strtolower($name) == strtolower($key)) {
                 return is_array($value)
                     ? $value
                     : [$value]

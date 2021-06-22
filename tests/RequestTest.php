@@ -370,6 +370,20 @@ class RequestTest extends TestCase
     /**
      * @test
      */
+    public function withHeaderMustPreserveCasing()
+    {
+        $request = $this->buildRequest();
+        $new = $request
+            ->withHeader('Foo', 'bar')
+        ;
+
+        $this->assertTrue(in_array('Foo', array_keys($new->getHeaders())));
+        $this->assertEquals(['bar'], $new->getHeader('foo'));
+    }
+
+    /**
+     * @test
+     */
     public function withAddedHeaderSetsNewHeader()
     {
         $request = $this->buildRequest();
