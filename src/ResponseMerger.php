@@ -49,9 +49,19 @@ class ResponseMerger
                 $setCookie->getPath(),
                 $setCookie->getDomain(),
                 $setCookie->getSecure(),
-                $setCookie->getHttpOnly()
+                $setCookie->getHttpOnly(),
+                $this->getSameSiteModifier($setCookie)
             );
         }
+    }
+
+    private function getSameSiteModifier($setCookie)
+    {
+        if ($sameSite = $setCookie->getSameSite()) {
+            return explode('=', strtolower($sameSite->asString()))[1];
+        }
+
+        return null;
     }
 
     private function copyBody($psrResponse, $swooleResponse)

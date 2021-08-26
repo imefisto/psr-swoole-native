@@ -83,6 +83,40 @@ class ResponseMergerTest extends TestCase
     /**
      * @test
      */
+    public function cookiesSupportSameSiteAttribute()
+    {
+        $expires = new \Datetime('+2 hours');
+
+        $cookieArray = [
+            'Cookie1=Value1; Domain=some-domain; Path=/; Expires='
+            . $expires->format(\DateTime::COOKIE) . ' GMT; Secure; HttpOnly; SameSite=None',
+            'Cookie2=Value2; Domain=some-domain; Path=/; Expires='
+            . $expires->format(\DateTime::COOKIE) . ' GMT; Secure; HttpOnly; SameSite=Lax',
+            'Cookie3=Value3; Domain=some-domain; Path=/; Expires='
+            . $expires->format(\DateTime::COOKIE) . ' GMT; Secure; HttpOnly; SameSite=Strict',
+        ];
+
+        $this->psrResponse->method('getHeaders')->willReturn([
+            'Set-Cookie' => $cookieArray
+        ]);
+        $this->psrResponse->method('getHeader')->willReturn($cookieArray);
+        $this->psrResponse->method('hasHeader')->willReturn(true);
+        $this->psrResponse->method('withoutHeader')->willReturn($this->psrResponse);
+
+        $this->swooleResponse->expects($cookieSpy = $this->exactly(3))
+                             ->method('cookie')
+                             ->withConsecutive(
+                                 ['Cookie1', 'Value1', $expires->getTimestamp(), '/', 'some-domain', true, true, 'none'],
+                                 ['Cookie2', 'Value2', $expires->getTimestamp(), '/', 'some-domain', true, true, 'lax'],
+                                 ['Cookie3', 'Value3', $expires->getTimestamp(), '/', 'some-domain', true, true, 'strict'],
+                             );
+
+        $this->responseMerger->toSwoole($this->psrResponse, $this->swooleResponse);
+    }
+
+    /**
+     * @test
+     */
     public function bodyContentGetsCopiedIfNotEmpty()
     {
         $this->body->expects($this->once())->method('getSize')->willReturn(1);
