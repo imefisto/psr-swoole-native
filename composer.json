@@ -1,35 +1,36 @@
 {
-    "name": "imefisto/psr-swoole-native",
-    "authors": [
-        {
-            "name": "Ignacio El Kadre",
-            "email": "imefisto@gmail.com"
-        }
-    ],
-    "license": "MIT",
-    "autoload": {
-      "psr-4": {
-        "Imefisto\\PsrSwoole\\": "src/"
-      }
-    },
-    "autoload-dev": {
-      "psr-4": {
-        "Imefisto\\PsrSwoole\\Testing\\": "tests/"
-      }
-    },
-    "require": {
-        "psr/http-message": "^1.0",
-        "psr/http-factory": "^1.0",
-        "dflydev/fig-cookies": "^1.0 || ^2.0 || ^3.0"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^8.5",
-        "nyholm/psr7": "^1.0"
-    },
-    "scripts": {
-      "test": "./vendor/bin/phpunit --configuration phpunit.xml",
-      "test:coverage": "./vendor/bin/phpunit --configuration phpunit.xml --coverage-clover build/logs/clover.xml --log-junit build/logs/junit.xml --coverage-html build/coverage",
-      "sniff": "phpcs -p --standard=PSR2 --runtime-set ignore_errors_on_exit 1 --runtime-set ignore_warnings_on_exit 1 src tests examples",
-      "format": "phpcbf -p --standard=PSR2 --runtime-set ignore_errors_on_exit 1 --runtime-set ignore_warnings_on_exit 1 src tests examples"
+  "name": "imefisto/psr-swoole-native",
+  "authors": [
+    {
+      "name": "Ignacio El Kadre",
+      "email": "imefisto@gmail.com"
     }
+  ],
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Imefisto\\PsrSwoole\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Imefisto\\PsrSwoole\\Testing\\": "tests/"
+    }
+  },
+  "require": {
+    "php": "^7.2 || ^8.0",
+    "psr/http-message": "^1.0",
+    "psr/http-factory": "^1.0",
+    "dflydev/fig-cookies": "^2.0 || ^3.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^8.5",
+    "nyholm/psr7": "^1.0"
+  },
+  "scripts": {
+    "test": "./vendor/bin/phpunit --configuration phpunit.xml",
+    "test:coverage": "./vendor/bin/phpunit --configuration phpunit.xml --coverage-clover build/logs/clover.xml --log-junit build/logs/junit.xml --coverage-html build/coverage",
+    "sniff": "phpcs -p --standard=PSR2 --runtime-set ignore_errors_on_exit 1 --runtime-set ignore_warnings_on_exit 1 src tests examples",
+    "format": "phpcbf -p --standard=PSR2 --runtime-set ignore_errors_on_exit 1 --runtime-set ignore_warnings_on_exit 1 src tests examples"
+  }
 }
