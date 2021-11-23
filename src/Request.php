@@ -76,7 +76,7 @@ class Request implements RequestInterface
 
         $userInfo = $this->parseUserInfo() ?? null;
 
-        $uri = (!empty($userInfo) ? '//' . $userInfo . '@' : '')
+        $uri = '//' . (!empty($userInfo) ? $userInfo . '@' : '')
             . $this->swooleRequest->header['host']
             . $this->getRequestTarget()
             ;
