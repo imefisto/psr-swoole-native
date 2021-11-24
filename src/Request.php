@@ -76,8 +76,13 @@ class Request implements RequestInterface
 
         $userInfo = $this->parseUserInfo() ?? null;
 
+        $host = $this->swooleRequest->header['host'];
+        if (strpos($this->swooleRequest->header['host'], ':') === false) {
+            $host .= ':80';
+        }
+
         $uri = '//' . (!empty($userInfo) ? $userInfo . '@' : '')
-            . $this->swooleRequest->header['host']
+            . $host
             . $this->getRequestTarget()
             ;
 

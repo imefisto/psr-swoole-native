@@ -125,6 +125,22 @@ class RequestTest extends TestCase
     /**
      * @test
      */
+    public function getUriOnPort80()
+    {
+        $request = $this->buildRequest('/foo');
+        $request->swooleRequest->header = [
+            'host' => 'localhost' // when swoole uses port 80, it does not include the port on host
+        ];
+        $request->swooleRequest->server['server_port'] = 80;
+
+        $this->assertEquals('/foo', $request->getUri()->getPath());
+        $this->assertEquals('localhost', $request->getUri()->getHost());
+        $this->assertEquals(80, $request->getUri()->getPort());
+    }
+
+    /**
+     * @test
+     */
     public function withUri()
     {
         $request = $this->buildRequest();
