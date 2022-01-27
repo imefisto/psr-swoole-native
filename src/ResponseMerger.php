@@ -7,9 +7,12 @@ use Dflydev\FigCookies\SetCookies;
 
 class ResponseMerger
 {
-    const FSTAT_MODE_S_IFIFO = 0010000;
-    const BUFFER_SIZE = 8192;
-    
+    public const FSTAT_MODE_S_IFIFO = 0010000;
+    public const BUFFER_SIZE = 8192;
+
+    protected const FILES_STREAM_TYPE = 'STDIO/coroutine';
+    protected const FILES_WRAPPER_TYPE = 'plainfile/coroutine';
+
     public function toSwoole(ResponseInterface $psrResponse, Response $swooleResponse): Response
     {
         $swooleResponse->status($psrResponse->getStatusCode());
@@ -66,6 +69,11 @@ class ResponseMerger
 
     private function copyBody($psrResponse, $swooleResponse)
     {
+        if ($this->isFileStreamInBody($psrResponse)) {
+            $swooleResponse->sendfile($psrResponse->getBody()->getMetadata('uri'));
+            return;
+        }
+
         if ($psrResponse->getBody()->getSize() == 0) {
             $this->copyBodyIfIsAPipe($psrResponse, $swooleResponse);
             return;
@@ -99,5 +107,13 @@ class ResponseMerger
     {
         $stat = fstat($resource);
         return ($stat['mode'] & self::FSTAT_MODE_S_IFIFO) === self::FSTAT_MODE_S_IFIFO;
+    }
+
+    private function isFileStreamInBody(ResponseInterface $psrResponse): bool
+    {
+        return
+            $psrResponse->getBody()->getMetadata('stream_type') === static::FILES_STREAM_TYPE &&
+            $psrResponse->getBody()->getMetadata('wrapper_type') === static::FILES_WRAPPER_TYPE &&
+            is_string($psrResponse->getBody()->getMetadata('uri'));
     }
 }

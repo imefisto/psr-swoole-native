@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "17aabcd66ff7cffe916b36c32ff0e25d",
+    "content-hash": "aa3c82816441d720e51be38540a08f5b",
     "packages": [
         {
             "name": "dflydev/fig-cookies",
@@ -1896,6 +1896,48 @@
             "time": "2016-10-03T07:35:21+00:00"
         },
         {
+            "name": "swoole/ide-helper",
+            "version": "4.8.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/swoole/ide-helper.git",
+                "reference": "b277ed171a29f7bbce1c5feee5581553101e06bf"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/swoole/ide-helper/zipball/b277ed171a29f7bbce1c5feee5581553101e06bf",
+                "reference": "b277ed171a29f7bbce1c5feee5581553101e06bf",
+                "shasum": ""
+            },
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Team Swoole",
+                    "email": "team@swoole.com"
+                }
+            ],
+            "description": "IDE help files for Swoole.",
+            "support": {
+                "issues": "https://github.com/swoole/ide-helper/issues",
+                "source": "https://github.com/swoole/ide-helper/tree/4.8.6"
+            },
+            "funding": [
+                {
+                    "url": "https://gitee.com/swoole/swoole?donate=true",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/swoole",
+                    "type": "github"
+                }
+            ],
+            "time": "2022-01-11T17:42:26+00:00"
+        },
+        {
             "name": "symfony/polyfill-ctype",
             "version": "v1.23.0",
             "source": {
@@ -2088,7 +2130,9 @@
     "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": [],
+    "platform": {
+        "php": "^7.2 || ^8.0"
+    },
     "platform-dev": [],
     "plugin-api-version": "2.0.0"
 }
