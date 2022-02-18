@@ -10,8 +10,8 @@ class ResponseMerger
     public const FSTAT_MODE_S_IFIFO = 0010000;
     public const BUFFER_SIZE = 8192;
 
-    protected const FILES_STREAM_TYPE = 'STDIO/coroutine';
-    protected const FILES_WRAPPER_TYPE = 'plainfile/coroutine';
+    protected const FILES_STREAM_TYPE = 'STDIO';
+    protected const FILES_WRAPPER_TYPE = 'plainfile';
 
     public function toSwoole(ResponseInterface $psrResponse, Response $swooleResponse): Response
     {
@@ -111,9 +111,12 @@ class ResponseMerger
 
     private function isFileStreamInBody(ResponseInterface $psrResponse): bool
     {
+        $streamType = explode('/', $psrResponse->getBody()->getMetadata('stream_type'))[0] ?? '';
+        $wrapperType = explode('/', $psrResponse->getBody()->getMetadata('wrapper_type'))[0] ?? '';
+
         return
-            $psrResponse->getBody()->getMetadata('stream_type') === static::FILES_STREAM_TYPE &&
-            $psrResponse->getBody()->getMetadata('wrapper_type') === static::FILES_WRAPPER_TYPE &&
+            $streamType === static::FILES_STREAM_TYPE &&
+            $wrapperType === static::FILES_WRAPPER_TYPE &&
             is_string($psrResponse->getBody()->getMetadata('uri'));
     }
 }
