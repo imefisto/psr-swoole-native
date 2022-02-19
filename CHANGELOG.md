@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2022-02-19
+### Added
+- Calls sendfile when body is a stream with an uri. ([#6](https://github.com/imefisto/psr-swoole-native/pull/6))
+
+## [1.0.1] - 2021-11-24
+### Fixed
+- Fix case when server listens port 80
+
 ## [1.0.0] - 2021-08-26
 ### Added
 - Added support for SameSite attribute on cookies
