@@ -1,6 +1,7 @@
 <?php
 namespace Imefisto\PsrSwoole\Testing;
 
+use Nyholm\Psr7\Factory\Psr17Factory;
 use PHPUnit\Framework\TestCase;
 use Swoole\Http\Response;
 use Psr\Http\Message\ResponseInterface;
@@ -137,14 +138,13 @@ class ResponseMergerTest extends TestCase
      */
     public function bodyContentGetsWrittenIfItIsAPipe()
     {
-        $this->body->expects($this->any())->method('getSize')->willReturn(0);
-
-        // named pipe (http://www.manpagez.com/man/2/stat/)
-        $namedPipe = ['mode' => 0010600];
-        $this->body->expects($this->any())
-                   ->method('getMetadata')->willReturn($namedPipe);
+        $this->body->method('getMetadata')
+                   ->will($this->returnValueMap([
+                       ['mode', 0010600],
+                   ]));
 
         $expectedProcess = popen('php -r "echo str_repeat(\'x\', 16384);"', 'r');
+        
         $this->body->expects($this->any())
                    ->method('detach')->willReturn($expectedProcess);
 
@@ -156,6 +156,24 @@ class ResponseMergerTest extends TestCase
 
         $this->responseMerger->toSwoole($this->psrResponse, $this->swooleResponse);
         $this->assertEquals('Unknown', get_resource_type($expectedProcess));
+    }
+
+    /**
+     * @test
+     */
+    public function sendsFileIfThereIsFileStreamInBody()
+    {
+        $factory = new Psr17Factory;
+        $expectedUri = __DIR__ . '/dummy.pdf';
+        $stream = $factory->createStreamFromFile($expectedUri);
+        $psrResponse = $factory->createResponse()
+            ->withBody($stream);
+
+        $this->swooleResponse->expects($this->once())
+                             ->method('sendfile')
+                             ->with($expectedUri);
+
+        $this->responseMerger->toSwoole($psrResponse, $this->swooleResponse);
     }
 
     /**
