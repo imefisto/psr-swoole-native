@@ -25,7 +25,7 @@ class ServerRequest extends Request implements ServerRequestInterface
 
     public function getServerParams()
     {
-        return $_SERVER ?? [];
+        return array_merge($_SERVER ?? [], array_change_key_case($this->swooleRequest->server ?? [], CASE_UPPER));
     }
 
     public function getCookieParams()
