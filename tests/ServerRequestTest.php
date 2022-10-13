@@ -27,7 +27,17 @@ class ServerRequestTest extends TestCase
     public function getServerParams()
     {
         $request = $this->buildRequest();
-        $this->assertEquals($_SERVER, $request->getServerParams());
+
+        $definedParamsOnSwooleRequest = [
+            'REQUEST_METHOD' => 'get',
+            'REQUEST_URI' => '/',
+            'SERVER_PROTOCOL' => 'HTTP/1.1',
+        ];
+
+        $this->assertEquals(
+            array_merge($_SERVER, $definedParamsOnSwooleRequest),
+            $request->getServerParams()
+        );
     }
 
     /**

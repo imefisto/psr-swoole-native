@@ -267,7 +267,7 @@ class RequestTest extends TestCase
 
         $requestHeaders = $request->getHeaders();
         foreach ($headers as $name => $value) {
-            $this->assertEquals($value, $requestHeaders[$name]);
+            $this->assertEquals([$value], $requestHeaders[$name]);
         }
     }
 
