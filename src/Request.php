@@ -11,6 +11,14 @@ use Swoole\Http\Request as SwooleRequest;
 class Request implements RequestInterface
 {
     private $headers = null;
+    public $swooleRequest;
+    public $uriFactory;
+    public $streamFactory;
+    public $requestTarget;
+    public $method;
+    public $uri;
+    public $protocol;
+    public $body;
 
     public function __construct(
         SwooleRequest $swooleRequest,

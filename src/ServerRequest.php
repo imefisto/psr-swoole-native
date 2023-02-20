@@ -12,6 +12,11 @@ use Swoole\Http\Request as SwooleRequest;
 class ServerRequest extends Request implements ServerRequestInterface
 {
     public $attributes = [];
+    public $uploadedFileFactory;
+    public $cookies;
+    public $query;
+    public $files;
+    public $parsedBody;
 
     public function __construct(
         SwooleRequest $swooleRequest,
