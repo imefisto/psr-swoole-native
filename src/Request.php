@@ -8,6 +8,7 @@ use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\StreamInterface;
 use Swoole\Http\Request as SwooleRequest;
 
+#[\AllowDynamicProperties]
 class Request implements RequestInterface
 {
     private $headers = null;
