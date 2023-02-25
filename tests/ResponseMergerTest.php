@@ -25,6 +25,12 @@ class ResponseMergerTest extends TestCase
 
         $this->swooleResponse = new MockedResponse;
         $this->body = $this->getMockForAbstractClass(\Psr\Http\Message\StreamInterface::class);
+
+        $this->body->method('getMetadata')
+                   ->will($this->returnValueMap([
+                       [ 'wrapper_type', 'PHP' ],
+                       [ 'stream_type', 'TEMP' ],
+                   ]));
         
         $this->psrResponse = $this->getMockBuilder(ResponseInterface::class)->getMockForAbstractClass();
         $this->psrResponse->expects($this->any())->method('getBody')->willReturn($this->body);
