@@ -56,10 +56,11 @@ class ResponseMergerTest extends TestCase
         ]);
         $this->psrResponse->method('withoutHeader')->willReturn($this->psrResponse);
 
-        $this->swooleResponse->expects($headerSpy = $this->exactly(2))->method('header');
-
         $this->responseMerger->toSwoole($this->psrResponse, $this->swooleResponse);
-        $this->assertSame(2, $headerSpy->getInvocationCount());
+        $this->assertEquals(
+            2,
+            $this->swooleResponse->countCalls('header')
+        );
     }
 
     /**
@@ -82,14 +83,28 @@ class ResponseMergerTest extends TestCase
         ]);
         $this->psrResponse->method('getHeader')->willReturn($cookieArray);
         $this->psrResponse->method('hasHeader')->willReturn(true);
-        $this->swooleResponse->expects($headerSpy = $this->exactly(0))->method('header');
-        $this->swooleResponse->expects($cookieSpy = $this->exactly(1))->method('cookie')
-            ->with('Cookie1', 'Value1', $expires->getTimestamp(), '/', 'some-domain', true, true);
+
+        // $this->swooleResponse->expects($headerSpy = $this->exactly(0))->method('header');
+        // $this->swooleResponse->expects($cookieSpy = $this->exactly(1))->method('cookie')
+        //     ->with('Cookie1', 'Value1', $expires->getTimestamp(), '/', 'some-domain', true, true);
 
         $this->responseMerger->toSwoole($this->psrResponse, $this->swooleResponse);
 
-        $this->assertSame(0, $headerSpy->getInvocationCount());
-        $this->assertSame(1, $cookieSpy->getInvocationCount());
+        $this->assertEquals(0, $this->swooleResponse->countCalls('header'));
+        $this->assertEquals(1, $this->swooleResponse->countCalls('cookie'));
+        $this->assertEquals(
+            [
+                'Cookie1',
+                'Value1',
+                $expires->getTimestamp(),
+                '/',
+                'some-domain',
+                true,
+                true,
+                null
+            ],
+            $this->swooleResponse->call('cookie')
+        );
     }
 
     /**
@@ -115,15 +130,18 @@ class ResponseMergerTest extends TestCase
         $this->psrResponse->method('hasHeader')->willReturn(true);
         $this->psrResponse->method('withoutHeader')->willReturn($this->psrResponse);
 
-        $this->swooleResponse->expects($cookieSpy = $this->exactly(3))
-                             ->method('cookie')
-                             ->withConsecutive(
-                                 ['Cookie1', 'Value1', $expires->getTimestamp(), '/', 'some-domain', true, true, 'none'],
-                                 ['Cookie2', 'Value2', $expires->getTimestamp(), '/', 'some-domain', true, true, 'lax'],
-                                 ['Cookie3', 'Value3', $expires->getTimestamp(), '/', 'some-domain', true, true, 'strict'],
-                             );
+        $expectedCalls = [
+            ['Cookie1', 'Value1', $expires->getTimestamp(), '/', 'some-domain', true, true, 'none'],
+            ['Cookie2', 'Value2', $expires->getTimestamp(), '/', 'some-domain', true, true, 'lax'],
+            ['Cookie3', 'Value3', $expires->getTimestamp(), '/', 'some-domain', true, true, 'strict'],
+        ];
 
         $this->responseMerger->toSwoole($this->psrResponse, $this->swooleResponse);
+
+        $this->assertEquals(3, $this->swooleResponse->countCalls('cookie'));
+        foreach ($expectedCalls as $at => $call) {
+            $this->assertEquals($call, $this->swooleResponse->call('cookie', $at));
+        }
     }
 
     /**
@@ -136,12 +154,13 @@ class ResponseMergerTest extends TestCase
         $this->body->expects($rewindSpy = $this->once())->method('rewind')->willReturn(null);
         $this->body->expects($this->once())->method('rewind')->willReturn(null);
         $this->body->expects($this->once())->method('getContents')->willReturn('abc');
-        $this->swooleResponse->expects($writeSpy = $this->once())->method('write')->with('abc');
 
         $this->responseMerger->toSwoole($this->psrResponse, $this->swooleResponse);
 
+        $this->assertEquals(1, $this->swooleResponse->countCalls('write'));
+        $this->assertEquals(['abc'], $this->swooleResponse->call('write'));
+
         $this->assertSame(1, $rewindSpy->getInvocationCount());
-        $this->assertSame(1, $writeSpy->getInvocationCount());
     }
 
     /**
@@ -159,14 +178,17 @@ class ResponseMergerTest extends TestCase
         $this->body->expects($this->any())
                    ->method('detach')->willReturn($expectedProcess);
 
-        $this->swooleResponse->expects($writeSpy = $this->atLeastOnce())
-                             ->method('write')
-                             ->with($this->callback(function ($contents) {
-                                 return strlen($contents) == ResponseMerger::BUFFER_SIZE;
-                             }));
-
         $this->responseMerger->toSwoole($this->psrResponse, $this->swooleResponse);
         $this->assertEquals('Unknown', get_resource_type($expectedProcess));
+        $this->assertEquals(
+            2,
+            $this->swooleResponse->countCalls('write')
+        );
+
+        for ($i = 0; $i < $this->swooleResponse->countCalls('write'); $i++) {
+            $contents = $this->swooleResponse->call('write', $i);
+            $this->assertEquals(ResponseMerger::BUFFER_SIZE, strlen($contents[0]));
+        }
     }
 
     /**
@@ -180,11 +202,10 @@ class ResponseMergerTest extends TestCase
         $psrResponse = $factory->createResponse()
             ->withBody($stream);
 
-        $this->swooleResponse->expects($this->once())
-                             ->method('sendfile')
-                             ->with($expectedUri);
-
         $this->responseMerger->toSwoole($psrResponse, $this->swooleResponse);
+
+        $this->assertEquals(1, $this->swooleResponse->countCalls('sendfile'));
+        $this->assertEquals([$expectedUri], $this->swooleResponse->call('sendfile'));
     }
 
     /**
@@ -193,10 +214,10 @@ class ResponseMergerTest extends TestCase
     public function statusCodeGetsCopied()
     {
         $this->psrResponse->expects($this->once())->method('getStatusCode')->willReturn(400);
-        $this->swooleResponse->expects($setStatusSpy = $this->once())->method('status')->with(400);
 
         $this->responseMerger->toSwoole($this->psrResponse, $this->swooleResponse);
 
-        $this->assertSame(1, $setStatusSpy->getInvocationCount());
+        $this->assertEquals(1, $this->swooleResponse->countCalls('status'));
+        $this->assertEquals(400, $this->swooleResponse->call('status')[0]);
     }
 }
