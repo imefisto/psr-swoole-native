@@ -14,6 +14,10 @@ class ServerRequestTest extends TestCase
 {
     use SwooleRequestBuilderTrait;
 
+    protected $uriFactory;
+    protected $streamFactory;
+    protected $uploadedFileFactory;
+
     protected function setUp(): void
     {
         $this->uriFactory = new Psr17Factory;

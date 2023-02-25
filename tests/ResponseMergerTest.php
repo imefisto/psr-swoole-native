@@ -13,6 +13,11 @@ use Imefisto\PsrSwoole\ResponseMerger;
  */
 class ResponseMergerTest extends TestCase
 {
+    protected $responseMerger;
+    protected $swooleResponse;
+    protected $body;
+    protected $psrResponse;
+
     public function setUp(): void
     {
         parent::setUp();
