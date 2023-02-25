@@ -23,7 +23,7 @@ class ResponseMergerTest extends TestCase
         parent::setUp();
         $this->responseMerger = new ResponseMerger();
 
-        $this->swooleResponse = $this->getMockBuilder(Response::class)->disableOriginalConstructor()->getMock();
+        $this->swooleResponse = new MockedResponse;
         $this->body = $this->getMockForAbstractClass(\Psr\Http\Message\StreamInterface::class);
         
         $this->psrResponse = $this->getMockBuilder(ResponseInterface::class)->getMockForAbstractClass();
