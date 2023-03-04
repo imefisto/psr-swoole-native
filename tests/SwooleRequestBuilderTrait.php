@@ -10,7 +10,7 @@ trait SwooleRequestBuilderTrait
         $method = 'get',
         $postBody = null
     ) {
-        $swooleRequest = $this->getMockBuilder(SwooleRequest::class)->getMock();
+        $swooleRequest = new MockedRequest;
         $swooleRequest->server = [
             'request_method' => $method,
             'request_uri' => $uri,
@@ -20,11 +20,6 @@ trait SwooleRequestBuilderTrait
             'host' => 'localhost:9501'
         ];
         $swooleRequest->post = $postBody;
-
-        $swooleRequest
-             ->expects($this->any())
-             ->method('rawContent')
-             ->willReturn($this->mockRawContent($swooleRequest));
 
         return $swooleRequest;
     }
