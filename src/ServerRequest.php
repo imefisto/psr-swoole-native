@@ -54,21 +54,23 @@ class ServerRequest extends Request implements ServerRequestInterface
 
     public function getUploadedFiles()
     {
-        if (!isset($this->files)) {
-            $this->files = [];
-
-            foreach ($this->swooleRequest->files ?? [] as $name => $fileData) {
-                $this->files[$name] = $this->uploadedFileFactory->createUploadedFile(
-                    $this->streamFactory->createStreamFromFile($fileData['tmp_name']),
-                    $fileData['size'],
-                    $fileData['error'],
-                    $fileData['name'],
-                    $fileData['type']
-                );
-            }
+        if (isset($this->files)) {
+            return $this->files;
         }
 
-        return $this->files;
+        $files = [];
+
+        foreach ($this->swooleRequest->files ?? [] as $name => $fileData) {
+            $files[$name] = $this->uploadedFileFactory->createUploadedFile(
+                $this->streamFactory->createStreamFromFile($fileData['tmp_name']),
+                $fileData['size'],
+                $fileData['error'],
+                $fileData['name'],
+                $fileData['type']
+            );
+        }
+
+        return $files;
     }
 
     public function withUploadedFiles(array $uploadedFiles)

@@ -140,6 +140,15 @@ class ServerRequestTest extends TestCase
     /**
      * @test
      */
+    public function getUploadedFilesShouldReturnEmptyArrayIfNoUploads()
+    {
+        $request = $this->buildRequest('/', 'post');
+        $this->assertEmpty($request->getUploadedFiles());
+    }
+
+    /**
+     * @test
+     */
     public function withUploadedFiles()
     {
         $request = $this->buildRequest();
