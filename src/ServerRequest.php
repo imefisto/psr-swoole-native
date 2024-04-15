@@ -60,7 +60,8 @@ class ServerRequest extends Request implements ServerRequestInterface
 
         $files = [];
 
-        foreach ($this->swooleRequest->files ?? [] as $name => $fileData) {
+        $swooleFiles = $this->swooleRequest->files ?? [];
+        foreach ($swooleFiles as $name => $fileData) {
             $files[$name] = $this->uploadedFileFactory->createUploadedFile(
                 $this->streamFactory->createStreamFromFile($fileData['tmp_name']),
                 $fileData['size'],
