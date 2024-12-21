@@ -1,6 +1,7 @@
 <?php
 namespace Imefisto\PsrSwoole;
 
+use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
@@ -23,7 +24,7 @@ class Request implements RequestInterface
         $this->streamFactory = $streamFactory;
     }
 
-    public function getRequestTarget()
+    public function getRequestTarget(): string
     {
         return !empty($this->requestTarget)
             ? $this->requestTarget
@@ -42,14 +43,14 @@ class Request implements RequestInterface
             . $queryString;
     }
 
-    public function withRequestTarget($requestTarget)
+    public function withRequestTarget(string $requestTarget): RequestInterface
     {
         $new = clone $this;
         $new->requestTarget = $requestTarget;
         return $new;
     }
 
-    public function getMethod()
+    public function getMethod(): string
     {
         return !empty($this->method)
             ? $this->method
@@ -57,7 +58,7 @@ class Request implements RequestInterface
             ;
     }
 
-    public function withMethod($method)
+    public function withMethod(string $method): RequestInterface
     {
         $validMethods = ['options','get','head','post','put','delete','trace','connect'];
         if (!in_array(strtolower($method), $validMethods)) {
@@ -69,7 +70,7 @@ class Request implements RequestInterface
         return $new;
     }
 
-    public function getUri()
+    public function getUri(): UriInterface
     {
         if (!empty($this->uri)) {
             return $this->uri;
@@ -104,7 +105,7 @@ class Request implements RequestInterface
         return null;
     }
 
-    public function withUri(UriInterface $uri, $preserveHost = false)
+    public function withUri(UriInterface $uri, bool $preserveHost = false): RequestInterface
     {
         $new = clone $this;
         $new->uri = $uri;
@@ -121,19 +122,19 @@ class Request implements RequestInterface
             && (!$preserveHost || !$this->hasHeader('host'));
     }
 
-    public function getProtocolVersion()
+    public function getProtocolVersion(): string
     {
         return $this->protocol ?? ($this->protocol = '1.1');
     }
 
-    public function withProtocolVersion($version)
+    public function withProtocolVersion(string $version): MessageInterface
     {
         $new = clone $this;
         $new->protocol = $version;
         return $new;
     }
 
-    public function getHeaders()
+    public function getHeaders(): array
     {
         $headers = is_array($this->headers)
             ? $this->headers
@@ -143,7 +144,7 @@ class Request implements RequestInterface
         }, $headers);
     }
 
-    public function hasHeader($name)
+    public function hasHeader($name): bool
     {
         $this->initHeadersList();
 
@@ -165,7 +166,7 @@ class Request implements RequestInterface
         $this->headers = $this->swooleRequest->header;
     }
 
-    public function getHeader($name)
+    public function getHeader(string $name): array
     {
         if (!$this->hasHeader($name)) {
             return [];
@@ -181,12 +182,12 @@ class Request implements RequestInterface
         }
     }
     
-    public function getHeaderLine($name)
+    public function getHeaderLine(string $name): string
     {
         return \implode(',', $this->getHeader($name));
     }
 
-    public function withHeader($name, $value)
+    public function withHeader(string $name, $value): MessageInterface
     {
         $new = clone $this;
         $new->initHeadersList();
@@ -196,7 +197,7 @@ class Request implements RequestInterface
         return $new;
     }
 
-    public function withAddedHeader($name, $value)
+    public function withAddedHeader(string $name, $value): MessageInterface
     {
         if (!$this->hasHeader($name)) {
             return $this->withHeader($name, $value);
@@ -216,7 +217,7 @@ class Request implements RequestInterface
         return $new;
     }
 
-    public function withoutHeader($name)
+    public function withoutHeader(string $name): MessageInterface
     {
         $new = clone $this;
 
@@ -232,12 +233,12 @@ class Request implements RequestInterface
         }
     }
 
-    public function getBody()
+    public function getBody(): StreamInterface
     {
         return $this->body ?? $this->streamFactory->createStream($this->swooleRequest->rawContent());
     }
 
-    public function withBody(StreamInterface $body)
+    public function withBody(StreamInterface $body): MessageInterface
     {
         $new = clone $this;
         $new->body = $body;
