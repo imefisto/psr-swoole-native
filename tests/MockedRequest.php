@@ -5,7 +5,7 @@ use Swoole\Http\Request;
 
 class MockedRequest extends Request
 {
-    public function rawContent()
+    public function rawContent(): string|false
     {
         if (empty($this->post)) {
             return false;

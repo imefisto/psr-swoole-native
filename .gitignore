@@ -1,5 +1,6 @@
 .phpunit.result.cache
 *.swp
 vendor
+composer.lock
 /build/
 /infection.log
