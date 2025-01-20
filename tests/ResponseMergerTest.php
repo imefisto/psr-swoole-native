@@ -84,10 +84,6 @@ class ResponseMergerTest extends TestCase
         $this->psrResponse->method('getHeader')->willReturn($cookieArray);
         $this->psrResponse->method('hasHeader')->willReturn(true);
 
-        // $this->swooleResponse->expects($headerSpy = $this->exactly(0))->method('header');
-        // $this->swooleResponse->expects($cookieSpy = $this->exactly(1))->method('cookie')
-        //     ->with('Cookie1', 'Value1', $expires->getTimestamp(), '/', 'some-domain', true, true);
-
         $this->responseMerger->toSwoole($this->psrResponse, $this->swooleResponse);
 
         $this->assertEquals(0, $this->swooleResponse->countCalls('header'));
@@ -101,7 +97,7 @@ class ResponseMergerTest extends TestCase
                 'some-domain',
                 true,
                 true,
-                null
+                'lax'
             ],
             $this->swooleResponse->call('cookie')
         );
@@ -142,6 +138,34 @@ class ResponseMergerTest extends TestCase
         foreach ($expectedCalls as $at => $call) {
             $this->assertEquals($call, $this->swooleResponse->call('cookie', $at));
         }
+    }
+
+    /**
+     * @test
+     */
+    public function returnsSameSiteLaxIfNotSpecified()
+    {
+        $expires = new \Datetime('+2 hours');
+
+        $cookieArray = [
+            'Cookie1=Value1; Domain=some-domain; Path=/; Expires='
+            . $expires->format(\DateTime::COOKIE) . ' GMT',
+        ];
+
+        $this->psrResponse->method('getHeaders')->willReturn([
+            'Set-Cookie' => $cookieArray
+        ]);
+        $this->psrResponse->method('getHeader')->willReturn($cookieArray);
+        $this->psrResponse->method('hasHeader')->willReturn(true);
+        $this->psrResponse->method('withoutHeader')->willReturn($this->psrResponse);
+
+        $this->responseMerger->toSwoole($this->psrResponse, $this->swooleResponse);
+
+        $this->assertEquals(1, $this->swooleResponse->countCalls('cookie'));
+
+        $expectedCall = ['Cookie1', 'Value1', $expires->getTimestamp(), '/', 'some-domain', false, false, 'lax'];
+
+        $this->assertEquals($expectedCall, $this->swooleResponse->call('cookie', 0));
     }
 
     /**

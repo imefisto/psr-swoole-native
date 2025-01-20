@@ -3,6 +3,7 @@ namespace Imefisto\PsrSwoole;
 
 use Psr\Http\Message\ResponseInterface;
 use Swoole\Http\Response;
+use Dflydev\FigCookies\Modifier\SameSite;
 use Dflydev\FigCookies\SetCookies;
 
 class ResponseMerger
@@ -60,11 +61,9 @@ class ResponseMerger
 
     private function getSameSiteModifier($setCookie)
     {
-        if ($sameSite = $setCookie->getSameSite()) {
-            return explode('=', strtolower($sameSite->asString()))[1];
-        }
+        $sameSite = $setCookie->getSameSite() ?? SameSite::lax();
 
-        return null;
+        return explode('=', strtolower($sameSite->asString()))[1];
     }
 
     private function copyBody($psrResponse, $swooleResponse)

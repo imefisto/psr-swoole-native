@@ -26,15 +26,16 @@ class MockedResponse extends Response
     }
 
     public function cookie(
-        $key,
-        $value = '',
-        $expire = 0,
-        $path = '/',
-        $domain = '',
-        $secure = false,
-        $httponly = false,
-        $samesite = '',
-        $priority = ''
+        \Swoole\Http\Cookie|string $name_or_object,
+        string $value = '',
+        int $expires = 0,
+        string $path = '/',
+        string $domain = '',
+        bool $secure = false,
+        bool $httponly = false,
+        string $samesite = '',
+        string $priority = '',
+        bool $partitioned = false
     ):bool {
         $this->registerCall('cookie', func_get_args());
         return true;
