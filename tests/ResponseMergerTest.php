@@ -97,7 +97,7 @@ class ResponseMergerTest extends TestCase
                 'some-domain',
                 true,
                 true,
-                null
+                'lax'
             ],
             $this->swooleResponse->call('cookie')
         );
