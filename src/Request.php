@@ -9,19 +9,15 @@ use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\StreamInterface;
 use Swoole\Http\Request as SwooleRequest;
 
-#[\AllowDynamicProperties]
 class Request implements RequestInterface
 {
     private $headers = null;
 
     public function __construct(
-        SwooleRequest $swooleRequest,
-        UriFactoryInterface $uriFactory,
-        StreamFactoryInterface $streamFactory
+        public readonly SwooleRequest $swooleRequest,
+        protected readonly UriFactoryInterface $uriFactory,
+        protected readonly StreamFactoryInterface $streamFactory
     ) {
-        $this->swooleRequest = $swooleRequest;
-        $this->uriFactory = $uriFactory;
-        $this->streamFactory = $streamFactory;
     }
 
     public function getRequestTarget(): string

@@ -17,10 +17,9 @@ class ServerRequest extends Request implements ServerRequestInterface
         SwooleRequest $swooleRequest,
         UriFactoryInterface $uriFactory,
         StreamFactoryInterface $streamFactory,
-        UploadedFileFactoryInterface $uploadedFileFactory
+        private readonly UploadedFileFactoryInterface $uploadedFileFactory
     ) {
         parent::__construct($swooleRequest, $uriFactory, $streamFactory);
-        $this->uploadedFileFactory = $uploadedFileFactory;
     }
 
     public function getServerParams(): array
