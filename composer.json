@@ -1,5 +1,6 @@
 {
   "name": "imefisto/psr-swoole-native",
+  "version": "2.0.0",
   "authors": [
     {
       "name": "Ignacio El Kadre",
