@@ -511,7 +511,7 @@ class RequestTest extends TestCase
         $this->assertImmutabililty($request, $new);
     }
 
-    private function buildRequest(SwooleRequest $swooleRequest = null)
+    private function buildRequest(?SwooleRequest $swooleRequest = null)
     {
         return new Request(
             $swooleRequest ?? $this->buildSwooleRequest('/', 'get'),

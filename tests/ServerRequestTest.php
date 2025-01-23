@@ -331,7 +331,7 @@ class ServerRequestTest extends TestCase
         $this->assertEquals([], $new->getAttributes());
     }
 
-    private function buildRequest(SwooleRequest $swooleRequest = null)
+    private function buildRequest(?SwooleRequest $swooleRequest = null)
     {
         return new ServerRequest(
             $swooleRequest ?? $this->buildSwooleRequest('/', 'get'),
