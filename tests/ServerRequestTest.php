@@ -5,6 +5,7 @@ use PHPUnit\Framework\TestCase;
 use Imefisto\PsrSwoole\ServerRequest;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\UploadedFileInterface;
+use Swoole\Http\Request as SwooleRequest;
 
 /**
  * @covers Imefisto\PsrSwoole\Request
@@ -54,8 +55,9 @@ class ServerRequestTest extends TestCase
             'name2' => 'value2',
         ];
 
-        $request = $this->buildRequest();
-        $request->swooleRequest->cookie = $cookies;
+        $swooleRequest = $this->buildSwooleRequest('/', 'get');
+        $swooleRequest->cookie = $cookies;
+        $request = $this->buildRequest($swooleRequest);
 
         $this->assertEquals(count($request->getCookieParams()), count($cookies));
     }
@@ -114,9 +116,9 @@ class ServerRequestTest extends TestCase
      */
     public function getUploadedFiles()
     {
-        $request = $this->buildRequest('/', 'post');
+        $swooleRequest = $this->buildSwooleRequest('/', 'post');
         $filepath = __DIR__ . '/dummy.pdf';
-        $request->swooleRequest->files = [
+        $swooleRequest->files = [
             'name1' => [
                 'tmp_name' => $filepath,
                 'name' => basename('dummy.pdf'),
@@ -125,6 +127,7 @@ class ServerRequestTest extends TestCase
                 'error' => 0
             ]
         ];
+        $request = $this->buildRequest($swooleRequest);
             
         $this->assertNotEmpty($request->getUploadedFiles());
 
@@ -142,7 +145,7 @@ class ServerRequestTest extends TestCase
      */
     public function getUploadedFilesShouldReturnEmptyArrayIfNoUploads()
     {
-        $request = $this->buildRequest('/', 'post');
+        $request = $this->buildRequest();
         $this->assertEmpty($request->getUploadedFiles());
     }
 
@@ -181,8 +184,9 @@ class ServerRequestTest extends TestCase
      */
     public function getParsedBodyNull()
     {
-        $request = $this->buildRequest('/', 'post');
-        $request->swooleRequest->post = [];
+        $postBody = [];
+        $swooleRequest = $this->buildSwooleRequest('/', 'post', $postBody);
+        $request = $this->buildRequest($swooleRequest);
         $this->assertTrue(is_null($request->getParsedBody()));
     }
 
@@ -191,11 +195,12 @@ class ServerRequestTest extends TestCase
      */
     public function getParsedBody()
     {
-        $request = $this->buildRequest('/', 'post');
-        $request->swooleRequest->post = [
+        $postBody = [
             'test' => 1
         ];
-        $this->assertEquals($request->swooleRequest->post, $request->getParsedBody());
+        $swooleRequest = $this->buildSwooleRequest('/', 'post', $postBody);
+        $request = $this->buildRequest($swooleRequest);
+        $this->assertEquals($postBody, $request->getParsedBody());
     }
 
     /**
@@ -203,10 +208,8 @@ class ServerRequestTest extends TestCase
      */
     public function withParsedBodyWithArrayAsArgument()
     {
-        $request = $this->buildRequest('/', 'post');
-        $request->swooleRequest->post = [
-            'test' => 1
-        ];
+        $swooleRequest = $this->buildSwooleRequest('/', 'post', ['test' => 1]);
+        $request = $this->buildRequest($swooleRequest);
         $newPost = ['test' => 2];
         $new = $request->withParsedBody($newPost);
         $this->assertEquals($newPost, $new->getParsedBody());
@@ -218,10 +221,8 @@ class ServerRequestTest extends TestCase
      */
     public function withParsedBodyWithObjectAsArgument()
     {
-        $request = $this->buildRequest('/', 'post');
-        $request->swooleRequest->post = [
-            'test' => 1
-        ];
+        $swooleRequest = $this->buildSwooleRequest('/', 'post', ['test' => 1]);
+        $request = $this->buildRequest($swooleRequest);
         $newPost = new \stdclass;
         $newPost->test = 2;
         $new = $request->withParsedBody($newPost);
@@ -233,10 +234,8 @@ class ServerRequestTest extends TestCase
      */
     public function withParsedBodyWithNullAsArgument()
     {
-        $request = $this->buildRequest('/', 'post');
-        $request->swooleRequest->post = [
-            'test' => 1
-        ];
+        $swooleRequest = $this->buildSwooleRequest('/', 'post', ['test' => 1]);
+        $request = $this->buildRequest($swooleRequest);
         $newPost = null;
         $new = $request->withParsedBody($newPost);
         $this->assertEquals($newPost, $new->getParsedBody());
@@ -249,10 +248,8 @@ class ServerRequestTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        $request = $this->buildRequest('/', 'post');
-        $request->swooleRequest->post = [
-            'test' => 1
-        ];
+        $swooleRequest = $this->buildSwooleRequest('/', 'post', ['test' => 1]);
+        $request = $this->buildRequest($swooleRequest);
         $invalidPost = 'test';
         $request->withParsedBody($invalidPost);
     }
@@ -296,6 +293,15 @@ class ServerRequestTest extends TestCase
     /**
      * @test
      */
+    public function getInexistentAttribute()
+    {
+        $request = $this->buildRequest();
+        $this->assertTrue(is_null($request->getAttribute('test')));
+    }
+
+    /**
+     * @test
+     */
     public function withAttribute()
     {
         $request = $this->buildRequest();
@@ -325,12 +331,10 @@ class ServerRequestTest extends TestCase
         $this->assertEquals([], $new->getAttributes());
     }
 
-    private function buildRequest(
-        $uri = '/',
-        $method = 'get'
-    ) {
+    private function buildRequest(SwooleRequest $swooleRequest = null)
+    {
         return new ServerRequest(
-            $this->buildSwooleRequest($uri, $method),
+            $swooleRequest ?? $this->buildSwooleRequest('/', 'get'),
             $this->uriFactory,
             $this->streamFactory,
             $this->uploadedFileFactory
