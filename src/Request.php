@@ -80,7 +80,7 @@ class Request implements RequestInterface
         $userInfo = $this->parseUserInfo() ?? null;
 
         $host = $this->swooleRequest->header['host'];
-        if (strpos($this->swooleRequest->header['host'], ':') === false) {
+        if (!str_contains((string) $this->swooleRequest->header['host'], ':')) {
             $host .= ':80';
         }
 
@@ -98,8 +98,8 @@ class Request implements RequestInterface
     {
         $authorization = $this->swooleRequest->header['authorization'] ?? '';
 
-        if (strpos($authorization, 'Basic') === 0) {
-            $parts = explode(' ', $authorization);
+        if (str_starts_with((string) $authorization, 'Basic')) {
+            $parts = explode(' ', (string) $authorization);
             return base64_decode($parts[1]);
         }
 
@@ -140,9 +140,7 @@ class Request implements RequestInterface
         $headers = is_array($this->headers)
             ? $this->headers
             : $this->swooleRequest->header;
-        return array_map(function($value) {
-            return is_array($value) ? $value : [$value];
-        }, $headers);
+        return array_map(fn($value) => is_array($value) ? $value : [$value], $headers);
     }
 
     public function hasHeader($name): bool

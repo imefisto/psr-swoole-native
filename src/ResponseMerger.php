@@ -63,7 +63,7 @@ class ResponseMerger
     {
         $sameSite = $setCookie->getSameSite() ?? SameSite::lax();
 
-        return explode('=', strtolower($sameSite->asString()))[1];
+        return explode('=', strtolower((string) $sameSite->asString()))[1];
     }
 
     private function copyBody($psrResponse, $swooleResponse)
@@ -110,8 +110,8 @@ class ResponseMerger
 
     private function isFileStreamInBody(ResponseInterface $psrResponse): bool
     {
-        $streamType = explode('/', $psrResponse->getBody()->getMetadata('stream_type'))[0] ?? '';
-        $wrapperType = explode('/', $psrResponse->getBody()->getMetadata('wrapper_type'))[0] ?? '';
+        $streamType = explode('/', (string) $psrResponse->getBody()->getMetadata('stream_type'))[0] ?? '';
+        $wrapperType = explode('/', (string) $psrResponse->getBody()->getMetadata('wrapper_type'))[0] ?? '';
 
         return
             $streamType === static::FILES_STREAM_TYPE &&
