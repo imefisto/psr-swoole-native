@@ -11,7 +11,12 @@ use Swoole\Http\Request as SwooleRequest;
 
 class Request implements RequestInterface
 {
-    private $headers = null;
+    private StreamInterface $body;
+    private ?array $headers = null;
+    private string $method;
+    private string $protocol = '1.1';
+    private string $requestTarget;
+    private UriInterface $uri;
 
     public function __construct(
         public readonly SwooleRequest $swooleRequest,
@@ -120,7 +125,7 @@ class Request implements RequestInterface
 
     public function getProtocolVersion(): string
     {
-        return $this->protocol ?? ($this->protocol = '1.1');
+        return $this->protocol;
     }
 
     public function withProtocolVersion(string $version): MessageInterface
