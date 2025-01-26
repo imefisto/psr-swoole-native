@@ -15,6 +15,16 @@ class PsrRequestFactory
     ) {
     }
 
+    public function createRequest(
+        SwooleRequest $swooleRequest
+    ): Request {
+        return new Request(
+            $swooleRequest,
+            $this->uriFactory,
+            $this->streamFactory
+        );
+    }
+
     public function createServerRequest(
         SwooleRequest $swooleRequest
     ): ServerRequest {

@@ -4,10 +4,11 @@ namespace Imefisto\PsrSwoole\Testing;
 use PHPUnit\Framework\TestCase;
 
 use Imefisto\PsrSwoole\PsrRequestFactory;
+use Imefisto\PsrSwoole\Request;
 use Imefisto\PsrSwoole\ServerRequest;
+use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\UploadedFileFactoryInterface;
 use Psr\Http\Message\UriFactoryInterface;
-use Psr\Http\Message\StreamFactoryInterface;
 
 class PsrRequestFactoryTest extends TestCase
 {
@@ -23,6 +24,14 @@ class PsrRequestFactoryTest extends TestCase
             $this->createMock(StreamFactoryInterface::class),
             $this->createMock(UploadedFileFactoryInterface::class)
         );
+    }
+
+    public function testCreateRequest()
+    {
+        $swooleRequest = $this->buildSwooleRequest('/', 'get');
+        $psrRequest = $this->factory->createRequest($swooleRequest);
+        $this->assertInstanceOf(Request::class, $psrRequest);
+        $this->assertSame($swooleRequest, $psrRequest->swooleRequest);
     }
 
     public function testCreateServerRequest()
