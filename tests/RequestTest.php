@@ -8,6 +8,7 @@ use Nyholm\Psr7\Stream;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
+use Swoole\Http\Request as SwooleRequest;
 
 /**
  * @covers Imefisto\PsrSwoole\Request
@@ -22,7 +23,8 @@ class RequestTest extends TestCase
     public function getRequestTargetOriginForm()
     {
         $uri = '/some-uri';
-        $request = $this->buildRequest($uri);
+        $swooleRequest = $this->buildSwooleRequest($uri);
+        $request = $this->buildRequest($swooleRequest);
         $this->assertEquals($uri, $request->getRequestTarget());
     }
 
@@ -32,8 +34,10 @@ class RequestTest extends TestCase
     public function getRequestTargetOriginFormWithQueryParams()
     {
         $queryParams = 'foo=1&baz=2';
-        $request = $this->buildRequest();
-        $request->swooleRequest->server['query_string'] = $queryParams;
+        $swooleRequest = $this->buildSwooleRequest('/');
+        $swooleRequest->server['query_string'] = $queryParams;
+
+        $request = $this->buildRequest($swooleRequest);
         $this->assertEquals('/?' . $queryParams, $request->getRequestTarget());
     }
 
@@ -43,7 +47,8 @@ class RequestTest extends TestCase
     public function withRequestTarget()
     {
         $uri = '/some-uri';
-        $request = $this->buildRequest($uri);
+        $swooleRequest = $this->buildSwooleRequest($uri);
+        $request = $this->buildRequest($swooleRequest);
 
         $newTarget = '/some-other-uri';
 
@@ -58,7 +63,8 @@ class RequestTest extends TestCase
     public function getMethod()
     {
         $method = 'get';
-        $request = $this->buildRequest('/', $method);
+        $swooleRequest = $this->buildSwooleRequest('/', $method);
+        $request = $this->buildRequest($swooleRequest);
 
         $this->assertEquals($method, $request->getMethod());
     }
@@ -106,12 +112,15 @@ class RequestTest extends TestCase
      */
     public function getUri()
     {
-        $request = $this->buildRequest('/foo');
+        $swooleRequest = $this->buildSwooleRequest('/foo');
+
         $queryString = 'foo=1&bar=2';
-        $request->swooleRequest->server['query_string'] = $queryString;
+        $swooleRequest->server['query_string'] = $queryString;
 
         $userInfo = 'someuser:somepass';
-        $request->swooleRequest->header['authorization'] = 'Basic ' . base64_encode($userInfo);
+        $swooleRequest->header['authorization'] = 'Basic ' . base64_encode($userInfo);
+
+        $request = $this->buildRequest($swooleRequest);
 
         $this->assertInstanceOf(UriInterface::class, $request->getUri());
 
@@ -127,11 +136,13 @@ class RequestTest extends TestCase
      */
     public function getUriOnPort80()
     {
-        $request = $this->buildRequest('/foo');
-        $request->swooleRequest->header = [
+        $swooleRequest = $this->buildSwooleRequest('/foo');
+        $swooleRequest->header = [
             'host' => 'localhost' // when swoole uses port 80, it does not include the port on host
         ];
-        $request->swooleRequest->server['server_port'] = 80;
+        $swooleRequest->server['server_port'] = 80;
+
+        $request = $this->buildRequest($swooleRequest);
 
         $this->assertEquals('/foo', $request->getUri()->getPath());
         $this->assertEquals('localhost', $request->getUri()->getHost());
@@ -196,6 +207,7 @@ class RequestTest extends TestCase
     public function withUriWithPreserveHostMustUpdateHostHeaderIfEmpty()
     {
         $request = $this->buildRequest()->withoutHeader('host');
+
         $newUri = new Uri('http://example.com/new-uri');
         $new = $request->withUri($newUri, true);
 
@@ -280,8 +292,9 @@ class RequestTest extends TestCase
             'foo' => 'bar',
         ];
 
-        $request = $this->buildRequest();
-        $request->swooleRequest->header = $headers;
+        $swooleRequest = $this->buildSwooleRequest('/');
+        $swooleRequest->header = $headers;
+        $request = $this->buildRequest($swooleRequest);
 
         $this->assertFalse($request->hasHeader('foox'));
         $this->assertTrue($request->hasHeader('foo'));
@@ -468,8 +481,8 @@ class RequestTest extends TestCase
             'foo2' => 'bar2',
         ];
 
-        $request = $this->buildRequest('/', 'post', $postBody);
-        $request->swooleRequest->post = $postBody;
+        $swooleRequest = $this->buildSwooleRequest('/', 'post', $postBody);
+        $request = $this->buildRequest($swooleRequest);
 
         $this->assertInstanceOf(StreamInterface::class, $request->getBody());
         $this->assertEquals(http_build_query($postBody), (string) $request->getBody());
@@ -488,7 +501,9 @@ class RequestTest extends TestCase
             'foo2' => 'bar2',
         ];
 
-        $request = $this->buildRequest('/', 'post', $post1);
+        $swooleRequest = $this->buildSwooleRequest('/', 'post', $post1);
+        $request = $this->buildRequest($swooleRequest);
+
         $newStream = Stream::create(http_build_query($post2));
         $new = $request->withBody($newStream);
 
@@ -496,13 +511,10 @@ class RequestTest extends TestCase
         $this->assertImmutabililty($request, $new);
     }
 
-    private function buildRequest(
-        $uri = '/',
-        $method = 'get',
-        $postBody = null
-    ) {
+    private function buildRequest(?SwooleRequest $swooleRequest = null)
+    {
         return new Request(
-            $this->buildSwooleRequest($uri, $method, $postBody),
+            $swooleRequest ?? $this->buildSwooleRequest('/', 'get'),
             new Psr17Factory,
             new Psr17Factory
         );

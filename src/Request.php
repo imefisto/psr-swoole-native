@@ -9,19 +9,20 @@ use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\StreamInterface;
 use Swoole\Http\Request as SwooleRequest;
 
-#[\AllowDynamicProperties]
 class Request implements RequestInterface
 {
-    private $headers = null;
+    private StreamInterface $body;
+    private ?array $headers = null;
+    private string $method;
+    private string $protocol = '1.1';
+    private string $requestTarget;
+    private UriInterface $uri;
 
     public function __construct(
-        SwooleRequest $swooleRequest,
-        UriFactoryInterface $uriFactory,
-        StreamFactoryInterface $streamFactory
+        public readonly SwooleRequest $swooleRequest,
+        protected readonly UriFactoryInterface $uriFactory,
+        protected readonly StreamFactoryInterface $streamFactory
     ) {
-        $this->swooleRequest = $swooleRequest;
-        $this->uriFactory = $uriFactory;
-        $this->streamFactory = $streamFactory;
     }
 
     public function getRequestTarget(): string
@@ -79,7 +80,7 @@ class Request implements RequestInterface
         $userInfo = $this->parseUserInfo() ?? null;
 
         $host = $this->swooleRequest->header['host'];
-        if (strpos($this->swooleRequest->header['host'], ':') === false) {
+        if (!str_contains((string) $this->swooleRequest->header['host'], ':')) {
             $host .= ':80';
         }
 
@@ -97,8 +98,8 @@ class Request implements RequestInterface
     {
         $authorization = $this->swooleRequest->header['authorization'] ?? '';
 
-        if (strpos($authorization, 'Basic') === 0) {
-            $parts = explode(' ', $authorization);
+        if (str_starts_with((string) $authorization, 'Basic')) {
+            $parts = explode(' ', (string) $authorization);
             return base64_decode($parts[1]);
         }
 
@@ -124,7 +125,7 @@ class Request implements RequestInterface
 
     public function getProtocolVersion(): string
     {
-        return $this->protocol ?? ($this->protocol = '1.1');
+        return $this->protocol;
     }
 
     public function withProtocolVersion(string $version): MessageInterface
@@ -139,9 +140,7 @@ class Request implements RequestInterface
         $headers = is_array($this->headers)
             ? $this->headers
             : $this->swooleRequest->header;
-        return array_map(function($value) {
-            return is_array($value) ? $value : [$value];
-        }, $headers);
+        return array_map(fn($value) => is_array($value) ? $value : [$value], $headers);
     }
 
     public function hasHeader($name): bool

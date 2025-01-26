@@ -11,16 +11,20 @@ use Swoole\Http\Request as SwooleRequest;
 
 class ServerRequest extends Request implements ServerRequestInterface
 {
-    public $attributes = [];
+    private array $attributes;
+    private array $cookies;
+    private array $files;
+    private null|array|object $parsedBody = null;
+    private bool $parsedBodyIsSet = false;
+    private array $query;
 
     public function __construct(
         SwooleRequest $swooleRequest,
         UriFactoryInterface $uriFactory,
         StreamFactoryInterface $streamFactory,
-        UploadedFileFactoryInterface $uploadedFileFactory
+        private readonly UploadedFileFactoryInterface $uploadedFileFactory
     ) {
         parent::__construct($swooleRequest, $uriFactory, $streamFactory);
-        $this->uploadedFileFactory = $uploadedFileFactory;
     }
 
     public function getServerParams(): array
@@ -82,7 +86,7 @@ class ServerRequest extends Request implements ServerRequestInterface
 
     public function getParsedBody()
     {
-        if (property_exists($this, 'parsedBody')) {
+        if ($this->parsedBodyIsSet) {
             return $this->parsedBody;
         }
         
@@ -101,12 +105,13 @@ class ServerRequest extends Request implements ServerRequestInterface
 
         $new = clone $this;
         $new->parsedBody = $data;
+        $new->parsedBodyIsSet = true;
         return $new;
     }
 
     public function getAttributes(): array
     {
-        return $this->attributes;
+        return $this->attributes ?? [];
     }
 
     public function getAttribute(string $name, $default = null)

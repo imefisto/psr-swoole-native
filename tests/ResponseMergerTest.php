@@ -23,7 +23,7 @@ class ResponseMergerTest extends TestCase
         parent::setUp();
         $this->responseMerger = new ResponseMerger();
 
-        $this->swooleResponse = new MockedResponse;
+        $this->swooleResponse = MockedResponseFactory::create();
         $this->body = $this->getMockForAbstractClass(\Psr\Http\Message\StreamInterface::class);
 
         $this->body->method('getMetadata')
@@ -211,7 +211,7 @@ class ResponseMergerTest extends TestCase
 
         for ($i = 0; $i < $this->swooleResponse->countCalls('write'); $i++) {
             $contents = $this->swooleResponse->call('write', $i);
-            $this->assertEquals(ResponseMerger::BUFFER_SIZE, strlen($contents[0]));
+            $this->assertEquals(ResponseMerger::BUFFER_SIZE, strlen((string) $contents[0]));
         }
     }
 
