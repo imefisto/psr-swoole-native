@@ -23,7 +23,7 @@ class ResponseMergerTest extends TestCase
         parent::setUp();
         $this->responseMerger = new ResponseMerger();
 
-        $this->swooleResponse = new MockedResponse;
+        $this->swooleResponse = MockedResponseFactory::create();
         $this->body = $this->getMockForAbstractClass(\Psr\Http\Message\StreamInterface::class);
 
         $this->body->method('getMetadata')

@@ -16,8 +16,20 @@ Starting from version 2.0.0, this library requires PHP 8.1 or greater. If you ne
 
 ## Compatibility Matrix
 
-| PHP Version | Swoole Version | Status |
-|-------------| ---------------|--------|
-| 8.1.31      | 5.1.6          | ✅     |
-| 8.2.26      | 5.1.6          | ✅     |
-| 8.4.1       | 6.0.0          | ❌     |
+This table contains the list of Swoole and PHP versions that have been tested with this library and its current status.
+
+| Swoole Version | PHP Version | Status |
+| ---------------|-------------|--------|
+| 4.8.13         | 7.3.33      | ❌     |
+| 4.8.13         | 7.4.33      | ❌     |
+| 4.8.13         | 8.0.30      | ❌     |
+| 4.8.13         | 8.1.30      | ✅     |
+| 4.8.13         | 8.2.24      | ✅     |
+| 5.1.6          | 8.0.30      | ❌     |
+| 5.1.6          | 8.1.31      | ✅     |
+| 5.1.6          | 8.2.26      | ✅     |
+| 5.1.6          | 8.3.14      | ✅     |
+| 6.0.0          | 8.1.31      | ✅     |
+| 6.0.0          | 8.2.27      | ✅     |
+| 6.0.0          | 8.4.1       | ✅     |
+| ---------------|-------------|--------|
