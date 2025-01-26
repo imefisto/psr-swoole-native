@@ -7,7 +7,7 @@ composer require imefisto/psr-swoole-native
 
 See how to use it in the examples folder.
 
-## Version Compatibility\n
+## Version Compatibility
 
 Starting from version 2.0.0, this library requires PHP 8.1 or greater. If you need support for PHP 7.x or PHP 8.0, please:
 
@@ -16,7 +16,7 @@ Starting from version 2.0.0, this library requires PHP 8.1 or greater. If you ne
 
 ## Compatibility Matrix
 
-This table contains the list of Swoole and PHP versions that have been tested with this library and its current status.
+This table contains the list of Swoole and PHP versions that have been tested with the last version of this library and its current status. The tests were run with [imefisto/psr-swoole-native-tests](https://github.com/imefisto/psr-swoole-native-tests).
 
 | Swoole Version | PHP Version | Status |
 | ---------------|-------------|--------|
@@ -32,4 +32,3 @@ This table contains the list of Swoole and PHP versions that have been tested wi
 | 6.0.0          | 8.1.31      | ✅     |
 | 6.0.0          | 8.2.27      | ✅     |
 | 6.0.0          | 8.4.1       | ✅     |
-| ---------------|-------------|--------|
