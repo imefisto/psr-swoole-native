@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2024-01-09
+### Added
+- Added PsrRequestFactory
+### Removed
+- Dropped support for PHP 7.x and PHP 8.0
+- Removed deprecations for compatibility up to PHP 8.4
+
 ## [1.1.0] - 2022-02-19
 ### Added
 - Calls sendfile when body is a stream with an uri. ([#6](https://github.com/imefisto/psr-swoole-native/pull/6))
