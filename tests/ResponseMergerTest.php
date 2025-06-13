@@ -171,6 +171,39 @@ class ResponseMergerTest extends TestCase
     /**
      * @test
      */
+    public function callsSetCookieWithProperDefaultValues()
+    {
+        $expires = new \Datetime('+2 hours');
+
+        $cookieArrayWithoutDomain = [ 'Cookie1=Value1' ];
+
+        $this->psrResponse->method('getHeaders')->willReturn([
+            'Set-Cookie' => $cookieArrayWithoutDomain
+        ]);
+        $this->psrResponse->method('getHeader')->willReturn($cookieArrayWithoutDomain);
+        $this->psrResponse->method('hasHeader')->willReturn(true);
+        $this->psrResponse->method('withoutHeader')->willReturn($this->psrResponse);
+
+        $this->responseMerger->toSwoole($this->psrResponse, $this->swooleResponse);
+
+        $this->assertEquals(
+            [
+                'Cookie1',
+                'Value1',
+                0,
+                '/',
+                '',
+                false,
+                false,
+                'lax'
+            ],
+            $this->swooleResponse->call('cookie')
+        );
+    }
+
+    /**
+     * @test
+     */
     public function bodyContentGetsCopiedIfNotEmpty()
     {
         $this->body->expects($this->once())->method('getSize')->willReturn(1);
