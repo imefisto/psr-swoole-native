@@ -48,10 +48,10 @@ class ResponseMerger
         foreach ($setCookies->getAll() as $setCookie) {
             $swooleResponse->cookie(
                 $setCookie->getName(),
-                $setCookie->getValue(),
+                $setCookie->getValue() ?? '',
                 $setCookie->getExpires(),
-                $setCookie->getPath(),
-                $setCookie->getDomain(),
+                $setCookie->getPath() ?? '/',
+                $setCookie->getDomain() ?? '',
                 $setCookie->getSecure(),
                 $setCookie->getHttpOnly(),
                 $this->getSameSiteModifier($setCookie)
