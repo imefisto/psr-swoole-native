@@ -1,6 +1,6 @@
 {
   "name": "imefisto/psr-swoole-native",
-  "version": "2.0.2",
+  "description": "Convert Swoole HTTP requests to PSR-7 and merge PSR-7 responses back to Swoole",
   "authors": [
     {
       "name": "Ignacio El Kadre",
