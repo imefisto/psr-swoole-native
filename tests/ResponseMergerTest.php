@@ -227,6 +227,48 @@ class ResponseMergerTest extends TestCase
     /**
      * @test
      */
+    public function bodyCanGetCopiedUsingChunks()
+    {
+        $resource = fopen('php://memory', 'r+');
+        $content = str_repeat('x', 2048);
+        fwrite($resource, $content);
+        $factory = new Psr17Factory;
+        $stream = $factory->createStreamFromResource($resource);
+        $psrResponse = $factory->createResponse()->withBody($stream);
+        $autoChunkSize = 1024;
+        $responseMerger = new ResponseMerger(autoChunkSize: 1024);
+
+        $responseMerger->toSwoole($psrResponse, $this->swooleResponse);
+
+        $this->assertEquals(
+            2, 
+            $this->swooleResponse->countCalls('write')
+        );
+
+        $this->assertEquals(
+            substr($content, 0, $autoChunkSize),
+            $this->swooleResponse->call('write', 0)[0]
+        );
+
+        $this->assertEquals(
+            substr($content, $autoChunkSize),
+            $this->swooleResponse->call('write', 1)[0]
+        );
+
+        $this->assertEquals(
+            1, 
+            $this->swooleResponse->countCalls('end')
+        );
+
+        $this->assertEquals(
+            [],
+            $this->swooleResponse->call('end')
+        );
+    }
+
+    /**
+     * @test
+     */
     public function bodyContentGetsWrittenIfItIsAPipe()
     {
         $descriptorSpec = [

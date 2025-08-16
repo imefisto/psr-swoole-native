@@ -14,6 +14,10 @@ class ResponseMerger
     protected const FILES_STREAM_TYPE = 'STDIO';
     protected const FILES_WRAPPER_TYPE = 'plainfile';
 
+    public function __construct(private readonly ?int $autoChunkSize = null)
+    {
+    }
+
     public function toSwoole(ResponseInterface $psrResponse, Response $swooleResponse): Response
     {
         $swooleResponse->status($psrResponse->getStatusCode());
@@ -84,7 +88,19 @@ class ResponseMerger
             rewind($resource);
         }
 
-        $swooleResponse->end(stream_get_contents($resource));
+        if ($this->autoChunkSize === null) {
+            $swooleResponse->end(stream_get_contents($resource));
+            return;
+        }
+
+        while (!feof($resource)) {
+            $chunk = fread($resource, $this->autoChunkSize);
+            if ($chunk !== '') {
+                $swooleResponse->write($chunk);
+            }
+        }
+
+        $swooleResponse->end();
     }
 
     private function getUriIfFileStream($resource): string|bool
