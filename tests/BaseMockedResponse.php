@@ -47,6 +47,12 @@ abstract class BaseMockedResponse extends Response
         return true;
     }
 
+    public function end(?string $content = null): bool
+    {
+        $this->registerCall('end', func_get_args());
+        return true;
+    }
+
     public function sendfile($filename, $offset = 0, $length = 0): bool
     {
         $this->registerCall('sendfile', func_get_args());

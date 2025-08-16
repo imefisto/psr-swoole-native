@@ -25,14 +25,10 @@ class ResponseMerger
 
     private function copyHeaders($psrResponse, $swooleResponse)
     {
-        if (empty($psrResponse->getHeaders())) {
-            return;
-        }
-
         $this->setCookies($swooleResponse, $psrResponse);
 
         $psrResponse = $psrResponse->withoutHeader('Set-Cookie');
-        
+
         foreach ($psrResponse->getHeaders() as $key => $headerArray) {
             $swooleResponse->header($key, implode('; ', $headerArray));
         }
@@ -68,38 +64,41 @@ class ResponseMerger
 
     private function copyBody($psrResponse, $swooleResponse)
     {
-        if ($this->isFileStreamInBody($psrResponse)) {
-            $swooleResponse->sendfile($psrResponse->getBody()->getMetadata('uri'));
-            return;
-        }
-
-        if ($psrResponse->getBody()->getSize() == 0) {
-            $this->copyBodyIfIsAPipe($psrResponse, $swooleResponse);
-            return;
-        }
-
-        if ($psrResponse->getBody()->isSeekable()) {
-            $psrResponse->getBody()->rewind();
-        }
-
-        $swooleResponse->write($psrResponse->getBody()->getContents());
-    }
-
-    private function copyBodyIfIsAPipe($psrResponse, $swooleResponse)
-    {
         $resource = $psrResponse->getBody()->detach();
 
         if (!is_resource($resource)) {
             return;
         }
 
-        if ($this->isPipe($resource)) {
-            while (!feof($resource)) {
-                $buff = fread($resource, self::BUFFER_SIZE);
-                !empty($buff) && $swooleResponse->write($buff);
-            }
-            pclose($resource);
+        if (false !== $uri = $this->getUriIfFileStream($resource)) {
+            $swooleResponse->sendfile($uri);
+            return;
         }
+
+        if ($this->isPipe($resource)) {
+            $this->handlePipedResource($resource, $swooleResponse);
+            return;
+        }
+
+        if (stream_get_meta_data($resource)['seekable']) {
+            rewind($resource);
+        }
+
+        $swooleResponse->end(stream_get_contents($resource));
+    }
+
+    private function getUriIfFileStream($resource): string|bool
+    {
+        $metadata = stream_get_meta_data($resource);
+        $streamType = explode('/', $metadata['stream_type'])[0];
+        $wrapperType = explode('/', $metadata['wrapper_type'] ?? '')[0];
+
+        return
+            $streamType === static::FILES_STREAM_TYPE &&
+            $wrapperType === static::FILES_WRAPPER_TYPE
+            ? $metadata['uri']
+            : false
+            ;
     }
 
     private function isPipe($resource)
@@ -108,14 +107,12 @@ class ResponseMerger
         return ($stat['mode'] & self::FSTAT_MODE_S_IFIFO) === self::FSTAT_MODE_S_IFIFO;
     }
 
-    private function isFileStreamInBody(ResponseInterface $psrResponse): bool
+    private function handlePipedResource($resource, $swooleResponse)
     {
-        $streamType = explode('/', (string) $psrResponse->getBody()->getMetadata('stream_type'))[0] ?? '';
-        $wrapperType = explode('/', (string) $psrResponse->getBody()->getMetadata('wrapper_type'))[0] ?? '';
-
-        return
-            $streamType === static::FILES_STREAM_TYPE &&
-            $wrapperType === static::FILES_WRAPPER_TYPE &&
-            is_string($psrResponse->getBody()->getMetadata('uri'));
+        while (!feof($resource)) {
+            $buff = fread($resource, self::BUFFER_SIZE);
+            !empty($buff) && $swooleResponse->write($buff);
+        }
+        pclose($resource);
     }
 }
