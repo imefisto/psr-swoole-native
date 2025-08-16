@@ -204,8 +204,20 @@ class ResponseMergerTest extends TestCase
 
         $this->responseMerger->toSwoole($psrResponse, $this->swooleResponse);
 
-        $this->assertEquals(1, $this->swooleResponse->countCalls('end'));
-        $this->assertEquals($content, $this->swooleResponse->call('end')[0]);
+        $this->assertEquals(
+            1,
+            $this->swooleResponse->countCalls('write')
+        );
+
+        $this->assertEquals(
+            $content,
+            $this->swooleResponse->call('write')[0]
+        );
+
+        $this->assertEquals(
+            0,
+            $this->swooleResponse->countCalls('end')
+        );
     }
 
     /**
@@ -221,7 +233,7 @@ class ResponseMergerTest extends TestCase
         $stream = $factory->createStreamFromResource($resource);
         $psrResponse = $factory->createResponse()->withBody($stream);
         $this->responseMerger->toSwoole($psrResponse, $this->swooleResponse);
-        $this->assertEquals($content, $this->swooleResponse->call('end')[0]);
+        $this->assertEquals($content, $this->swooleResponse->call('write')[0]);
     }
 
     /**
@@ -256,13 +268,8 @@ class ResponseMergerTest extends TestCase
         );
 
         $this->assertEquals(
-            1, 
+            0,
             $this->swooleResponse->countCalls('end')
-        );
-
-        $this->assertEquals(
-            [],
-            $this->swooleResponse->call('end')
         );
     }
 

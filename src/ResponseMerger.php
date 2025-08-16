@@ -89,7 +89,8 @@ class ResponseMerger
         }
 
         if ($this->autoChunkSize === null) {
-            $swooleResponse->end(stream_get_contents($resource));
+            rewind($resource);
+            $swooleResponse->write(stream_get_contents($resource));
             return;
         }
 
@@ -99,8 +100,6 @@ class ResponseMerger
                 $swooleResponse->write($chunk);
             }
         }
-
-        $swooleResponse->end();
     }
 
     private function getUriIfFileStream($resource): string|bool
