@@ -10,6 +10,9 @@ use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\UploadedFileFactoryInterface;
 use Psr\Http\Message\UriFactoryInterface;
 
+/**
+ * @covers Imefisto\PsrSwoole\PsrRequestFactory
+ */
 class PsrRequestFactoryTest extends TestCase
 {
     use SwooleRequestBuilderTrait;

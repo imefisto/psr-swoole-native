@@ -1,0 +1,27 @@
+name: tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  tests:
+    name: Swoole ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    container: phpswoole/swoole:${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - 4.8-php8.1
+          - 5.1-php8.2
+          - 5.1-php8.3
+          - 6.0-php8.4
+          - 6.2-php8.5
+    steps:
+      - uses: actions/checkout@v4
+      - run: composer update --no-interaction --no-progress --prefer-dist
+      - run: vendor/bin/phpunit
+      - run: vendor/bin/phpstan analyse --no-progress
+        if: matrix.image == '6.2-php8.5'
