@@ -511,6 +511,98 @@ class RequestTest extends TestCase
         $this->assertImmutabililty($request, $new);
     }
 
+    /**
+     * @test
+     */
+    public function withMethodAcceptsPatch()
+    {
+        $new = $this->buildRequest()->withMethod('PATCH');
+        $this->assertEquals('PATCH', $new->getMethod());
+    }
+
+    /**
+     * @test
+     */
+    public function getProtocolVersionIsReadFromSwooleRequest()
+    {
+        $swooleRequest = $this->buildSwooleRequest('/');
+        $swooleRequest->server['server_protocol'] = 'HTTP/2';
+        $this->assertEquals('2', $this->buildRequest($swooleRequest)->getProtocolVersion());
+
+        $swooleRequest->server['server_protocol'] = 'HTTP/1.0';
+        $this->assertEquals('1.0', $this->buildRequest($swooleRequest)->getProtocolVersion());
+    }
+
+    /**
+     * @test
+     */
+    public function worksWhenSwooleRequestHasNoHeaders()
+    {
+        $swooleRequest = $this->buildSwooleRequest('/foo');
+        $swooleRequest->header = null;
+        $request = $this->buildRequest($swooleRequest);
+
+        $this->assertEquals([], $request->getHeaders());
+        $this->assertFalse($request->hasHeader('host'));
+        $this->assertEquals(['bar'], $request->withHeader('foo', 'bar')->getHeader('foo'));
+        $this->assertEquals('/foo', $request->getUri()->getPath());
+    }
+
+    /**
+     * @test
+     */
+    public function withHeaderReplacesHeaderRegardlessOfCase()
+    {
+        $new = $this->buildRequest()
+            ->withHeader('foo', 'bar')
+            ->withHeader('Foo', 'baz');
+
+        $this->assertEquals(['baz'], $new->getHeader('foo'));
+        $this->assertCount(1, array_filter(
+            array_keys($new->getHeaders()),
+            fn($name) => strtolower($name) === 'foo'
+        ));
+    }
+
+    /**
+     * @test
+     */
+    public function withAddedHeaderAppendsRegardlessOfCase()
+    {
+        $new = $this->buildRequest()
+            ->withHeader('Foo', 'bar')
+            ->withAddedHeader('foo', 'baz');
+
+        $this->assertEquals(['bar', 'baz'], $new->getHeader('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function withoutHeaderRemovesHeaderAddedWithDifferentCase()
+    {
+        $new = $this->buildRequest()
+            ->withHeader('Foo', 'bar')
+            ->withoutHeader('foo');
+
+        $this->assertFalse($new->hasHeader('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getBodyReturnsTheSameStreamOnEachCall()
+    {
+        $swooleRequest = $this->buildSwooleRequest('/', 'post', ['foo' => 'bar']);
+        $request = $this->buildRequest($swooleRequest);
+
+        $request->getBody()->seek(0, SEEK_END);
+        $request->getBody()->write('&baz=1');
+
+        $this->assertSame($request->getBody(), $request->getBody());
+        $this->assertEquals('foo=bar&baz=1', (string) $request->getBody());
+    }
+
     private function buildRequest(?SwooleRequest $swooleRequest = null)
     {
         return new Request(

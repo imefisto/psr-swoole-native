@@ -11,7 +11,7 @@ use Swoole\Http\Request as SwooleRequest;
 
 class ServerRequest extends Request implements ServerRequestInterface
 {
-    private array $attributes;
+    private array $attributes = [];
     private array $cookies;
     private array $files;
     private null|array|object $parsedBody = null;
@@ -29,7 +29,7 @@ class ServerRequest extends Request implements ServerRequestInterface
 
     public function getServerParams(): array
     {
-        return array_merge($_SERVER ?? [], array_change_key_case($this->swooleRequest->server ?? [], CASE_UPPER));
+        return array_merge($_SERVER, array_change_key_case($this->swooleRequest->server ?? [], CASE_UPPER));
     }
 
     public function getCookieParams(): array
@@ -74,7 +74,7 @@ class ServerRequest extends Request implements ServerRequestInterface
             );
         }
 
-        return $files;
+        return $this->files = $files;
     }
 
     public function withUploadedFiles(array $uploadedFiles): ServerRequestInterface
@@ -111,12 +111,15 @@ class ServerRequest extends Request implements ServerRequestInterface
 
     public function getAttributes(): array
     {
-        return $this->attributes ?? [];
+        return $this->attributes;
     }
 
     public function getAttribute(string $name, $default = null)
     {
-        return $this->attributes[$name] ?? $default;
+        return array_key_exists($name, $this->attributes)
+            ? $this->attributes[$name]
+            : $default
+            ;
     }
 
     public function withAttribute(string $name, $value): ServerRequestInterface
