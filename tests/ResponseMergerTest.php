@@ -5,6 +5,7 @@ use Nyholm\Psr7\Factory\Psr17Factory;
 use PHPUnit\Framework\TestCase;
 use Swoole\Http\Response;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 
 use Imefisto\PsrSwoole\ResponseMerger;
 
@@ -304,6 +305,38 @@ class ResponseMergerTest extends TestCase
                 strlen((string) $contents[0])
             );
         }
+    }
+
+    /**
+     * @test
+     */
+    public function bodyIsCopiedWhenStreamIsNotBackedByAResource()
+    {
+        $body = $this->createMock(StreamInterface::class);
+        $body->method('getMetadata')->willReturn(null);
+        $body->method('__toString')->willReturn('abcde');
+        $psrResponse = (new Psr17Factory)->createResponse()->withBody($body);
+
+        $this->responseMerger->toSwoole($psrResponse, $this->swooleResponse);
+
+        $this->assertEquals(1, $this->swooleResponse->countCalls('write'));
+        $this->assertEquals(['abcde'], $this->swooleResponse->call('write'));
+    }
+
+    /**
+     * @test
+     */
+    public function bodyNotBackedByAResourceCanBeCopiedUsingChunks()
+    {
+        $body = $this->createMock(StreamInterface::class);
+        $body->method('getMetadata')->willReturn(null);
+        $body->method('__toString')->willReturn('abcde');
+        $psrResponse = (new Psr17Factory)->createResponse()->withBody($body);
+
+        (new ResponseMerger(autoChunkSize: 2))->toSwoole($psrResponse, $this->swooleResponse);
+
+        $this->assertEquals(3, $this->swooleResponse->countCalls('write'));
+        $this->assertEquals(['e'], $this->swooleResponse->call('write', 2));
     }
 
     /**

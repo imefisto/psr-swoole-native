@@ -47,7 +47,7 @@ abstract class BaseMockedResponse extends Response
         return true;
     }
 
-    public function end(?string $content = null): bool
+    public function end($content = null): bool
     {
         $this->registerCall('end', func_get_args());
         return true;

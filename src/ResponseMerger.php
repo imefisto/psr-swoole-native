@@ -68,7 +68,14 @@ class ResponseMerger
 
     private function copyBody($psrResponse, $swooleResponse)
     {
-        $resource = $psrResponse->getBody()->detach();
+        $body = $psrResponse->getBody();
+
+        if ($body->getMetadata('stream_type') === null) {
+            $this->writeContents((string) $body, $swooleResponse);
+            return;
+        }
+
+        $resource = $body->detach();
 
         if (!is_resource($resource)) {
             return;
@@ -89,7 +96,6 @@ class ResponseMerger
         }
 
         if ($this->autoChunkSize === null) {
-            rewind($resource);
             $swooleResponse->write(stream_get_contents($resource));
             return;
         }
@@ -99,6 +105,21 @@ class ResponseMerger
             if ($chunk !== '') {
                 $swooleResponse->write($chunk);
             }
+        }
+    }
+
+    /**
+     * For PSR-7 streams that are not backed by a PHP resource
+     * (e.g. callback or generator streams).
+     */
+    private function writeContents(string $contents, $swooleResponse)
+    {
+        if ($contents === '') {
+            return;
+        }
+
+        foreach (str_split($contents, $this->autoChunkSize ?? strlen($contents)) as $chunk) {
+            $swooleResponse->write($chunk);
         }
     }
 
