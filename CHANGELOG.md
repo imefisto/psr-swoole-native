@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-10-13
+### Added
+- `ResponseMerger` accepts an optional `autoChunkSize`, which writes the body in chunks of that size. Use it to stay below Swoole's `output_buffer_size` ([#23](https://github.com/imefisto/psr-swoole-native/issues/23), [#24](https://github.com/imefisto/psr-swoole-native/pull/24))
+- Tested on PHP 8.4 and 8.5. CI runs from Swoole 4.8 with PHP 8.1 to Swoole 6.2 with PHP 8.5 ([#25](https://github.com/imefisto/psr-swoole-native/pull/25))
+
+### Changed
+- Requires `psr/http-message` `^1.1 || ^2.0`. Version 1.0 never worked, because the library fails to load against its untyped interfaces.
+- Requires `psr/http-factory` `^1.1`. Version 1.0.x emits deprecations on PHP 8.4+.
+- Pipes are detected with `fstat()` instead of relying on an empty body size.
+- Header values with several entries are joined with `, ` instead of `; `.
+- `getProtocolVersion()` reports the protocol of the Swoole request, e.g. `2` or `1.0`, instead of always `1.1`.
+
+### Fixed
+- Cookie `Max-Age` was ignored. Persistent cookies became session cookies, and `Max-Age=0` could not delete a cookie.
+- `withoutHeader()` failed with a `TypeError` when the header was stored with different casing.
+- `withHeader()` and `withAddedHeader()` are now case-insensitive, so a header can no longer appear twice.
+- `withMethod('PATCH')` threw an exception.
+- A request without headers raised an error in `getHeaders()`.
+- `getBody()` returned a new stream on each call, so writes to it were lost. `getUploadedFiles()` reopened every file on each call.
+- `getAttribute()` returned the default for an attribute explicitly set to `null`.
+- Bodies whose PSR-7 stream is not backed by a PHP resource are written instead of being dropped.
+
+## [2.0.2] - 2025-06-13
+### Changed
+- Updated version on composer.
+
+## [2.0.1] - 2025-06-13
+### Fixed
+- Remove deprecations for set cookie.
+
 ## [2.0.0] - 2024-01-09
 ### Added
 - Added PsrRequestFactory
