@@ -67,6 +67,10 @@ The sibling repo [psr-swoole-native-tests](https://github.com/imefisto/psr-swool
 - Swoole 4.8 → 6.x. `Swoole\Http\Response::cookie()` changed signature in 5.0, and the code must work with both.
 - `src/` has no `declare(strict_types=1)`. Adding it changes behavior for callers, for example `rawContent()` returning `false`, so don't add it casually.
 
+## Parsed body
+
+`getParsedBody()` returns, in order: a value set with `withParsedBody()`, Swoole's `post` when it is non-empty, or the raw body decoded as JSON into arrays when the `Content-Type` is `application/json` or `*/*+json`. Swoole only fills `post` for form content types. The JSON is decoded lazily and cached, separately from `withParsedBody()`, so a later `Content-Type` change on a clone is still respected. It is decoded from `rawContent()`, not from `getBody()`, so `withBody()` does not change it.
+
 ## ResponseMerger behavior worth knowing
 
 - Multi-value headers are joined with `", "`. `Set-Cookie` is removed from the header list and sent through `Swoole\Http\Response::cookie()` instead, after parsing with `dflydev/fig-cookies`.
@@ -75,9 +79,8 @@ The sibling repo [psr-swoole-native-tests](https://github.com/imefisto/psr-swool
 
 ## Known gaps / open issues
 
-- #22: `getParsedBody()` only returns Swoole's `post`, so JSON bodies give `null`.
 - #23: bodies larger than Swoole's `output_buffer_size` fail unless `new ResponseMerger(autoChunkSize: N)` is used with `N` below that size. It is off by default.
-- `getUploadedFiles()` assumes a flat `files` array. Multi-file fields (`name="f[]"`) are not normalized into a nested tree yet.
+- #27: `getUploadedFiles()` assumes a flat `files` array. Multi-file fields (`name="f[]"`) throw a `TypeError` instead of giving a nested tree.
 - `getUri()` has no scheme. It appends `:80` when the `Host` header has no port, and takes user-info from a `Basic` `Authorization` header.
 - `getServerParams()` merges the worker's `$_SERVER` with the Swoole `server` array (keys upper-cased).
 

@@ -16,6 +16,8 @@ class ServerRequest extends Request implements ServerRequestInterface
     private array $files;
     private null|array|object $parsedBody = null;
     private bool $parsedBodyIsSet = false;
+    private ?array $decodedJsonBody = null;
+    private bool $jsonBodyDecoded = false;
     private array $query;
 
     public function __construct(
@@ -94,7 +96,45 @@ class ServerRequest extends Request implements ServerRequestInterface
             return $this->swooleRequest->post;
         }
 
+        if ($this->isJsonRequest()) {
+            if (!$this->jsonBodyDecoded) {
+                $this->decodedJsonBody = $this->decodeJsonBody();
+                $this->jsonBodyDecoded = true;
+            }
+            return $this->decodedJsonBody;
+        }
+
         return null;
+    }
+
+    private function isJsonRequest(): bool
+    {
+        // application/json and structured suffixes like application/vnd.api+json
+        return preg_match(
+            '#^\s*application/([a-z0-9.!\#$&^_-]+\+)?json\s*(;|$)#i',
+            $this->getHeaderLine('content-type')
+        ) === 1;
+    }
+
+    /**
+     * Swoole only fills `post` for form content types, so JSON is decoded
+     * from the raw body. Only arrays and objects are valid parsed bodies;
+     * empty, invalid or scalar JSON means there is no parsed body.
+     */
+    private function decodeJsonBody(): ?array
+    {
+        $rawBody = (string) $this->swooleRequest->rawContent();
+        if ($rawBody === '') {
+            return null;
+        }
+
+        try {
+            $decoded = json_decode($rawBody, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return null;
+        }
+
+        return is_array($decoded) ? $decoded : null;
     }
 
     public function withParsedBody($data): ServerRequestInterface

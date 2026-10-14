@@ -361,6 +361,95 @@ class ServerRequestTest extends TestCase
         $this->assertSame($request->getUploadedFiles()['name1'], $request->getUploadedFiles()['name1']);
     }
 
+    /**
+     * @test
+     * @dataProvider jsonContentTypes
+     */
+    public function getParsedBodyDecodesJson(string $contentType)
+    {
+        $request = $this->buildJsonRequest('{"field":"value","list":[1,2]}', $contentType);
+        $this->assertSame(['field' => 'value', 'list' => [1, 2]], $request->getParsedBody());
+    }
+
+    public static function jsonContentTypes(): array
+    {
+        return [
+            'json' => ['application/json'],
+            'with charset' => ['application/json; charset=utf-8'],
+            'uppercase' => ['Application/JSON'],
+            'structured suffix' => ['application/vnd.api+json'],
+        ];
+    }
+
+    /**
+     * @test
+     * @dataProvider jsonBodiesWithoutParsedContent
+     */
+    public function getParsedBodyReturnsNullForJsonWithoutStructuredContent(string $rawBody)
+    {
+        $request = $this->buildJsonRequest($rawBody);
+        $this->assertNull($request->getParsedBody());
+    }
+
+    public static function jsonBodiesWithoutParsedContent(): array
+    {
+        return [
+            'empty body' => [''],
+            'invalid json' => ['{"field":'],
+            'scalar' => ['"just a string"'],
+            'null literal' => ['null'],
+        ];
+    }
+
+    /**
+     * @test
+     */
+    public function getParsedBodyReturnsEmptyArrayForEmptyJsonObject()
+    {
+        $this->assertSame([], $this->buildJsonRequest('{}')->getParsedBody());
+    }
+
+    /**
+     * @test
+     */
+    public function getParsedBodyDoesNotDecodeJsonForOtherContentTypes()
+    {
+        $request = $this->buildJsonRequest('{"field":"value"}', 'text/plain');
+        $this->assertNull($request->getParsedBody());
+    }
+
+    /**
+     * @test
+     */
+    public function withParsedBodyOverridesDecodedJson()
+    {
+        $request = $this->buildJsonRequest('{"field":"value"}');
+        $new = $request->withParsedBody(['other' => 1]);
+
+        $this->assertSame(['other' => 1], $new->getParsedBody());
+        $this->assertSame(['field' => 'value'], $request->getParsedBody());
+    }
+
+    /**
+     * @test
+     */
+    public function getParsedBodyFollowsContentTypeChangesAfterDecoding()
+    {
+        $request = $this->buildJsonRequest('{"field":"value"}');
+        $this->assertSame(['field' => 'value'], $request->getParsedBody());
+
+        $this->assertNull($request->withHeader('Content-Type', 'text/plain')->getParsedBody());
+    }
+
+    private function buildJsonRequest(string $rawBody, string $contentType = 'application/json')
+    {
+        $swooleRequest = $this->buildSwooleRequest('/', 'post');
+        $swooleRequest->header['content-type'] = $contentType;
+        $swooleRequest->rawBody = $rawBody;
+
+        return $this->buildRequest($swooleRequest);
+    }
+
     private function buildRequest(?SwooleRequest $swooleRequest = null)
     {
         return new ServerRequest(

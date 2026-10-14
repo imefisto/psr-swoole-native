@@ -5,8 +5,14 @@ use Swoole\Http\Request;
 
 class MockedRequest extends Request
 {
+    public ?string $rawBody = null;
+
     public function rawContent(): string|false
     {
+        if ($this->rawBody !== null) {
+            return $this->rawBody;
+        }
+
         if (empty($this->post)) {
             return false;
         }
