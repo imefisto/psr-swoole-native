@@ -17,7 +17,7 @@ Starting from version 2.0.0, this library requires PHP 8.1 or greater. If you ne
 
 ## Compatibility Matrix
 
-These are the Swoole and PHP versions that version 2.1.0 of this library was tested with. The test suite runs on each of them in [CI](.github/workflows/tests.yml), using the official `phpswoole/swoole` images.
+These are the Swoole and PHP versions that version 2.2.0 of this library was tested with. The test suite runs on each of them in [CI](.github/workflows/tests.yml), using the official `phpswoole/swoole` images.
 
 | Swoole Version | PHP Version | Status |
 | -------------- | ----------- | ------ |
