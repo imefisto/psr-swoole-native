@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Example of a framework-less server with FastRoute (`examples/fastroute.php`).
+
+### Fixed
+- The Slim 4 example could not run: it was missing an import and loaded the wrong autoloader path.
+
 ## [2.2.0] - 2026-10-13
 ### Added
 - `ServerRequest::getParsedBody()` decodes JSON bodies for `application/json` and `+json` content types into arrays. An empty, invalid or scalar JSON body still gives `null`. Form posts and values set with `withParsedBody()` take precedence as before ([#22](https://github.com/imefisto/psr-swoole-native/issues/22))

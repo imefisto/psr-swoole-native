@@ -1,5 +1,5 @@
 <?php
-use Imefisto\PsrSwoole\ServerRequest as PsrRequest;
+use Imefisto\PsrSwoole\PsrRequestFactory;
 use Imefisto\PsrSwoole\ResponseMerger;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Slim\Factory\AppFactory;
@@ -7,7 +7,8 @@ use Swoole\Http\Request;
 use Swoole\Http\Response;
 use Swoole\Http\Server;
 
-require __DIR__ . '/vendor/autoload.php';
+// Requires: composer require slim/slim
+require __DIR__ . '/../vendor/autoload.php';
 
 /**
  * Create your slim app
