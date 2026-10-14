@@ -17,22 +17,17 @@ Starting from version 2.0.0, this library requires PHP 8.1 or greater. If you ne
 
 ## Compatibility Matrix
 
-This table contains the list of Swoole and PHP versions that have been tested with the last version of this library and its current status. The tests were run with [imefisto/psr-swoole-native-tests](https://github.com/imefisto/psr-swoole-native-tests).
+These are the Swoole and PHP versions that version 2.1.0 of this library was tested with. The test suite runs on each of them in [CI](.github/workflows/tests.yml), using the official `phpswoole/swoole` images.
 
 | Swoole Version | PHP Version | Status |
 | -------------- | ----------- | ------ |
-| 4.8.13         | 7.3.33      | ❌      |
-| 4.8.13         | 7.4.33      | ❌      |
-| 4.8.13         | 8.0.30      | ❌      |
 | 4.8.13         | 8.1.30      | ✅      |
-| 4.8.13         | 8.2.24      | ✅      |
-| 5.1.6          | 8.0.30      | ❌      |
-| 5.1.6          | 8.1.31      | ✅      |
-| 5.1.6          | 8.2.26      | ✅      |
-| 5.1.6          | 8.3.14      | ✅      |
-| 6.0.0          | 8.1.31      | ✅      |
-| 6.0.0          | 8.2.27      | ✅      |
-| 6.0.0          | 8.4.1       | ✅      |
+| 5.1.8          | 8.2.29      | ✅      |
+| 5.1.8          | 8.3.26      | ✅      |
+| 6.0.2          | 8.4.14      | ✅      |
+| 6.2.3          | 8.5.10      | ✅      |
+
+PHP 7.x and 8.0 are not supported since 2.0.0 (see above).
 
 ## 🛠 Maintainer Guide: Release Workflow
 
