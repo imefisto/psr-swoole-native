@@ -5,6 +5,7 @@ use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileFactoryInterface;
+use Psr\Http\Message\UploadedFileInterface;
 use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface;
 use Swoole\Http\Request as SwooleRequest;
@@ -64,19 +65,41 @@ class ServerRequest extends Request implements ServerRequestInterface
             return $this->files;
         }
 
+        return $this->files = $this->createUploadedFiles($this->swooleRequest->files ?? []);
+    }
+
+    /**
+     * Swoole nests one file array per upload under the field names
+     * (f[], f[x][y], ...), so the tree is walked until an array with a
+     * string tmp_name is found.
+     */
+    private function createUploadedFiles(array $swooleFiles): array
+    {
         $files = [];
 
-        foreach ($this->swooleRequest->files ?? [] as $name => $fileData) {
-            $files[$name] = $this->uploadedFileFactory->createUploadedFile(
-                $this->streamFactory->createStreamFromFile($fileData['tmp_name']),
-                $fileData['size'],
-                $fileData['error'],
-                $fileData['name'],
-                $fileData['type']
-            );
+        foreach ($swooleFiles as $name => $value) {
+            $files[$name] = is_string($value['tmp_name'] ?? null)
+                ? $this->createUploadedFile($value)
+                : $this->createUploadedFiles($value);
         }
 
-        return $this->files = $files;
+        return $files;
+    }
+
+    private function createUploadedFile(array $fileData): UploadedFileInterface
+    {
+        // Failed uploads (e.g. an empty file input) have no file to open
+        $stream = $fileData['error'] === UPLOAD_ERR_OK
+            ? $this->streamFactory->createStreamFromFile($fileData['tmp_name'])
+            : $this->streamFactory->createStream();
+
+        return $this->uploadedFileFactory->createUploadedFile(
+            $stream,
+            $fileData['size'],
+            $fileData['error'],
+            $fileData['name'],
+            $fileData['type']
+        );
     }
 
     public function withUploadedFiles(array $uploadedFiles): ServerRequestInterface
