@@ -4,7 +4,7 @@ namespace Imefisto\PsrSwoole;
 use Psr\Http\Message\ResponseInterface;
 use Swoole\Http\Response;
 use Dflydev\FigCookies\Modifier\SameSite;
-use Dflydev\FigCookies\SetCookies;
+use Dflydev\FigCookies\SetCookie;
 
 class ResponseMerger
 {
@@ -34,7 +34,7 @@ class ResponseMerger
         $psrResponse = $psrResponse->withoutHeader('Set-Cookie');
         
         foreach ($psrResponse->getHeaders() as $key => $headerArray) {
-            $swooleResponse->header($key, implode('; ', $headerArray));
+            $swooleResponse->header($key, implode(', ', $headerArray));
         }
     }
 
@@ -44,12 +44,12 @@ class ResponseMerger
             return;
         }
 
-        $setCookies = SetCookies::fromSetCookieStrings($psrResponse->getHeader('Set-Cookie'));
-        foreach ($setCookies->getAll() as $setCookie) {
+        foreach ($psrResponse->getHeader('Set-Cookie') as $setCookieString) {
+            $setCookie = SetCookie::fromSetCookieString($setCookieString);
             $swooleResponse->cookie(
                 $setCookie->getName(),
                 $setCookie->getValue() ?? '',
-                $setCookie->getExpires(),
+                $this->getExpires($setCookie, $setCookieString),
                 $setCookie->getPath() ?? '/',
                 $setCookie->getDomain() ?? '',
                 $setCookie->getSecure(),
@@ -57,6 +57,23 @@ class ResponseMerger
                 $this->getSameSiteModifier($setCookie)
             );
         }
+    }
+
+    /**
+     * Max-Age takes precedence over Expires (RFC 6265, section 5.3).
+     * FigCookies returns 0 both for a missing Max-Age and for Max-Age=0,
+     * so presence is detected on the raw header.
+     */
+    private function getExpires(SetCookie $setCookie, string $setCookieString): int
+    {
+        if (preg_match('/;\s*max-age\s*=\s*(-?\d+)/i', $setCookieString, $matches) !== 1) {
+            return $setCookie->getExpires();
+        }
+
+        $maxAge = (int) $matches[1];
+
+        // 1 instead of 0: Swoole reads 0 as "session cookie"
+        return $maxAge > 0 ? time() + $maxAge : 1;
     }
 
     private function getSameSiteModifier($setCookie)

@@ -331,6 +331,36 @@ class ServerRequestTest extends TestCase
         $this->assertEquals([], $new->getAttributes());
     }
 
+    /**
+     * @test
+     */
+    public function getAttributeReturnsNullWhenSetToNull()
+    {
+        $request = $this->buildRequest()->withAttribute('test', null);
+        $this->assertNull($request->getAttribute('test', 'default'));
+    }
+
+    /**
+     * @test
+     */
+    public function getUploadedFilesReturnsTheSameInstancesOnEachCall()
+    {
+        $swooleRequest = $this->buildSwooleRequest('/', 'post');
+        $filepath = __DIR__ . '/dummy.pdf';
+        $swooleRequest->files = [
+            'name1' => [
+                'tmp_name' => $filepath,
+                'name' => 'dummy.pdf',
+                'type' => 'application/pdf',
+                'size' => filesize($filepath),
+                'error' => 0
+            ]
+        ];
+        $request = $this->buildRequest($swooleRequest);
+
+        $this->assertSame($request->getUploadedFiles()['name1'], $request->getUploadedFiles()['name1']);
+    }
+
     private function buildRequest(?SwooleRequest $swooleRequest = null)
     {
         return new ServerRequest(

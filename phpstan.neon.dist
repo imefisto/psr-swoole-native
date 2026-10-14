@@ -1,0 +1,15 @@
+parameters:
+    level: 5
+    paths:
+        - src
+    # PSR-7 parameter types are only documented in PHPDoc (e.g. withParsedBody),
+    # so runtime validation of those arguments is still needed.
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        # PHP omits 'wrapper_type' from stream_get_meta_data() for some streams
+        # (e.g. sockets), but PHPStan's stub declares it as always present.
+        -
+            identifier: nullCoalesce.offset
+            message: '#wrapper_type#'
+            path: src/ResponseMerger.php
+            reportUnmatched: false

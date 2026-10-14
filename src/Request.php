@@ -14,7 +14,7 @@ class Request implements RequestInterface
     private StreamInterface $body;
     private ?array $headers = null;
     private string $method;
-    private string $protocol = '1.1';
+    private string $protocol;
     private string $requestTarget;
     private UriInterface $uri;
 
@@ -61,7 +61,7 @@ class Request implements RequestInterface
 
     public function withMethod(string $method): RequestInterface
     {
-        $validMethods = ['options','get','head','post','put','delete','trace','connect'];
+        $validMethods = ['options','get','head','post','put','patch','delete','trace','connect'];
         if (!in_array(strtolower($method), $validMethods)) {
             throw new \InvalidArgumentException('Invalid HTTP method');
         }
@@ -79,8 +79,12 @@ class Request implements RequestInterface
 
         $userInfo = $this->parseUserInfo() ?? null;
 
-        $host = $this->swooleRequest->header['host'];
-        if (!str_contains((string) $this->swooleRequest->header['host'], ':')) {
+        $host = (string) ($this->swooleRequest->header['host'] ?? '');
+        if ($host === '') {
+            return $this->uri = $this->uriFactory->createUri($this->getRequestTarget());
+        }
+
+        if (!str_contains($host, ':')) {
             $host .= ':80';
         }
 
@@ -125,7 +129,17 @@ class Request implements RequestInterface
 
     public function getProtocolVersion(): string
     {
-        return $this->protocol;
+        return $this->protocol ??= $this->parseProtocolVersion();
+    }
+
+    private function parseProtocolVersion(): string
+    {
+        $serverProtocol = (string) ($this->swooleRequest->server['server_protocol'] ?? '');
+
+        return str_starts_with($serverProtocol, 'HTTP/')
+            ? substr($serverProtocol, 5)
+            : '1.1'
+            ;
     }
 
     public function withProtocolVersion(string $version): MessageInterface
@@ -137,50 +151,25 @@ class Request implements RequestInterface
 
     public function getHeaders(): array
     {
-        $headers = is_array($this->headers)
-            ? $this->headers
-            : $this->swooleRequest->header;
-        return array_map(fn($value) => is_array($value) ? $value : [$value], $headers);
+        return array_map(fn($value) => is_array($value) ? $value : [$value], $this->headerList());
     }
 
-    public function hasHeader($name): bool
+    public function hasHeader(string $name): bool
     {
-        $this->initHeadersList();
-
-        foreach ($this->headers as $key => $value) {
-            if (strtolower($name) == strtolower($key)) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-
-    private function initHeadersList()
-    {
-        if (is_array($this->headers)) {
-            return;
-        }
-
-        $this->headers = $this->swooleRequest->header;
+        return $this->findHeaderKey($name) !== null;
     }
 
     public function getHeader(string $name): array
     {
-        if (!$this->hasHeader($name)) {
+        $key = $this->findHeaderKey($name);
+        if ($key === null) {
             return [];
         }
 
-        foreach ($this->headers as $key => $value) {
-            if (strtolower($name) == strtolower($key)) {
-                return is_array($value)
-                    ? $value
-                    : [$value]
-                    ;
-            }
-        }
+        $value = $this->headerList()[$key];
+        return is_array($value) ? $value : [$value];
     }
-    
+
     public function getHeaderLine(string $name): string
     {
         return \implode(',', $this->getHeader($name));
@@ -188,9 +177,7 @@ class Request implements RequestInterface
 
     public function withHeader(string $name, $value): MessageInterface
     {
-        $new = clone $this;
-        $new->initHeadersList();
-
+        $new = $this->withoutHeader($name);
         $new->headers[$name] = $value;
 
         return $new;
@@ -198,20 +185,17 @@ class Request implements RequestInterface
 
     public function withAddedHeader(string $name, $value): MessageInterface
     {
-        if (!$this->hasHeader($name)) {
+        $key = $this->findHeaderKey($name);
+        if ($key === null) {
             return $this->withHeader($name, $value);
         }
 
         $new = clone $this;
-
-        if (is_array($new->headers[$name])) {
-            $new->headers[$name][] = $value;
-        } else {
-            $new->headers[$name] = [
-                $new->headers[$name],
-                $value
-            ];
-        }
+        $new->headers = $this->headerList();
+        $new->headers[$key] = array_merge(
+            $this->getHeader($key),
+            is_array($value) ? $value : [$value]
+        );
 
         return $new;
     }
@@ -219,22 +203,42 @@ class Request implements RequestInterface
     public function withoutHeader(string $name): MessageInterface
     {
         $new = clone $this;
+        $new->headers = $this->headerList();
 
-        if (!$new->hasHeader($name)) {
-            return $new;
+        $key = $this->findHeaderKey($name);
+        if ($key !== null) {
+            unset($new->headers[$key]);
         }
 
-        foreach ($new->headers as $key => $value) {
-            if (strtolower($name) == $key) {
-                unset($new->headers[$key]);
-                return $new;
+        return $new;
+    }
+
+    /**
+     * Headers modified through with*() calls, or the native Swoole headers
+     * when the request was not modified.
+     */
+    private function headerList(): array
+    {
+        return $this->headers ?? $this->swooleRequest->header ?? [];
+    }
+
+    private function findHeaderKey(string $name): ?string
+    {
+        $name = strtolower($name);
+        foreach (array_keys($this->headerList()) as $key) {
+            if (strtolower((string) $key) === $name) {
+                return (string) $key;
             }
         }
+
+        return null;
     }
 
     public function getBody(): StreamInterface
     {
-        return $this->body ?? $this->streamFactory->createStream($this->swooleRequest->rawContent());
+        return $this->body ??= $this->streamFactory->createStream(
+            (string) $this->swooleRequest->rawContent()
+        );
     }
 
     public function withBody(StreamInterface $body): MessageInterface

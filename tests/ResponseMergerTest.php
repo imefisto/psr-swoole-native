@@ -208,7 +208,6 @@ class ResponseMergerTest extends TestCase
     {
         $this->body->expects($this->once())->method('getSize')->willReturn(1);
         $this->body->expects($this->once())->method('isSeekable')->willReturn(true);
-        $this->body->expects($rewindSpy = $this->once())->method('rewind');
         $this->body->expects($this->once())->method('rewind');
         $this->body->expects($this->once())->method('getContents')->willReturn('abc');
 
@@ -216,8 +215,6 @@ class ResponseMergerTest extends TestCase
 
         $this->assertEquals(1, $this->swooleResponse->countCalls('write'));
         $this->assertEquals(['abc'], $this->swooleResponse->call('write'));
-
-        $this->assertSame(1, $rewindSpy->getInvocationCount());
     }
 
     /**
