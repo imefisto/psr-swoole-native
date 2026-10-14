@@ -450,6 +450,94 @@ class ServerRequestTest extends TestCase
         return $this->buildRequest($swooleRequest);
     }
 
+    /**
+     * @test
+     */
+    public function getUploadedFilesNormalizesListFields()
+    {
+        $request = $this->buildRequestWithFiles([
+            'f' => [$this->swooleFile('a.pdf'), $this->swooleFile('b.pdf')],
+        ]);
+
+        $files = $request->getUploadedFiles();
+
+        $this->assertCount(2, $files['f']);
+        $this->assertInstanceOf(UploadedFileInterface::class, $files['f'][0]);
+        $this->assertEquals('a.pdf', $files['f'][0]->getClientFilename());
+        $this->assertEquals('b.pdf', $files['f'][1]->getClientFilename());
+    }
+
+    /**
+     * @test
+     */
+    public function getUploadedFilesNormalizesNestedFields()
+    {
+        $request = $this->buildRequestWithFiles([
+            'f' => [
+                'x' => [
+                    'y' => $this->swooleFile('a.pdf'),
+                    'z' => [$this->swooleFile('b.pdf')],
+                ],
+            ],
+        ]);
+
+        $files = $request->getUploadedFiles();
+
+        $this->assertEquals('a.pdf', $files['f']['x']['y']->getClientFilename());
+        $this->assertEquals('b.pdf', $files['f']['x']['z'][0]->getClientFilename());
+    }
+
+    /**
+     * @test
+     */
+    public function getUploadedFilesSupportsFieldNamedTmpName()
+    {
+        $request = $this->buildRequestWithFiles([
+            'f' => ['tmp_name' => $this->swooleFile('a.pdf')],
+        ]);
+
+        $files = $request->getUploadedFiles();
+
+        $this->assertEquals('a.pdf', $files['f']['tmp_name']->getClientFilename());
+    }
+
+    /**
+     * @test
+     */
+    public function getUploadedFilesKeepsUploadErrorsForEmptyFileInputs()
+    {
+        // what Swoole sends for a file input left empty in a browser form
+        $request = $this->buildRequestWithFiles([
+            'f' => ['type' => '', 'tmp_name' => '', 'size' => 0, 'name' => '', 'error' => UPLOAD_ERR_NO_FILE],
+        ]);
+
+        $file = $request->getUploadedFiles()['f'];
+
+        $this->assertInstanceOf(UploadedFileInterface::class, $file);
+        $this->assertEquals(UPLOAD_ERR_NO_FILE, $file->getError());
+    }
+
+    private function buildRequestWithFiles(array $files)
+    {
+        $swooleRequest = $this->buildSwooleRequest('/', 'post');
+        $swooleRequest->files = $files;
+
+        return $this->buildRequest($swooleRequest);
+    }
+
+    private function swooleFile(string $clientFilename): array
+    {
+        $filepath = __DIR__ . '/dummy.pdf';
+
+        return [
+            'type' => 'application/pdf',
+            'tmp_name' => $filepath,
+            'size' => filesize($filepath),
+            'name' => $clientFilename,
+            'error' => UPLOAD_ERR_OK,
+        ];
+    }
+
     private function buildRequest(?SwooleRequest $swooleRequest = null)
     {
         return new ServerRequest(

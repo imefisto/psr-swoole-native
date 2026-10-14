@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `ServerRequest::getParsedBody()` decodes JSON bodies for `application/json` and `+json` content types into arrays. An empty, invalid or scalar JSON body still gives `null`. Form posts and values set with `withParsedBody()` take precedence as before ([#22](https://github.com/imefisto/psr-swoole-native/issues/22))
 
+### Fixed
+- `getUploadedFiles()` threw a `TypeError` for multi-file fields such as `f[]` or `f[x][y]`. It now returns the nested tree PSR-7 requires ([#27](https://github.com/imefisto/psr-swoole-native/issues/27))
+- `getUploadedFiles()` threw when a form contained an empty file input. Such inputs now give an uploaded file that carries its error code, `UPLOAD_ERR_NO_FILE`.
+
 ## [2.1.0] - 2026-10-13
 ### Added
 - `ResponseMerger` accepts an optional `autoChunkSize`, which writes the body in chunks of that size. Use it to stay below Swoole's `output_buffer_size` ([#23](https://github.com/imefisto/psr-swoole-native/issues/23), [#24](https://github.com/imefisto/psr-swoole-native/pull/24))
