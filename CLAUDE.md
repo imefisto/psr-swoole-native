@@ -71,12 +71,12 @@ The sibling repo [psr-swoole-native-tests](https://github.com/imefisto/psr-swool
 
 - Multi-value headers are joined with `", "`. `Set-Cookie` is removed from the header list and sent through `Swoole\Http\Response::cookie()` instead, after parsing with `dflydev/fig-cookies`.
 - Cookie expiry: `Max-Age` wins over `Expires`. `Max-Age<=0` is sent as expiry `1`, because Swoole treats `0` as a session cookie. Cookies without `SameSite` are sent as `SameSite=lax`. Attributes that Swoole's `cookie()` does not accept, such as `Partitioned`, are dropped.
-- Body: a plain-file stream is sent with `sendfile()`, a pipe is streamed in `BUFFER_SIZE` chunks, and anything else is written with `write()`.
+- Body: a plain-file stream is sent with `sendfile()`, and a pipe is streamed in `BUFFER_SIZE` chunks. Any other resource is written with `write()`, in `autoChunkSize` pieces when that constructor option is set. A PSR-7 stream with no underlying resource (`getMetadata('stream_type') === null`) is written from its string contents.
 
 ## Known gaps / open issues
 
 - #22: `getParsedBody()` only returns Swoole's `post`, so JSON bodies give `null`.
-- #23: bodies larger than Swoole's `output_buffer_size` fail. PR #24 adds an opt-in `autoChunkSize` to `ResponseMerger`.
+- #23: bodies larger than Swoole's `output_buffer_size` fail unless `new ResponseMerger(autoChunkSize: N)` is used with `N` below that size. It is off by default.
 - `getUploadedFiles()` assumes a flat `files` array. Multi-file fields (`name="f[]"`) are not normalized into a nested tree yet.
 - `getUri()` has no scheme. It appends `:80` when the `Host` header has no port, and takes user-info from a `Basic` `Authorization` header.
 - `getServerParams()` merges the worker's `$_SERVER` with the Swoole `server` array (keys upper-cased).

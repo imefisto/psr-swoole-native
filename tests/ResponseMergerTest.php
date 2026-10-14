@@ -5,6 +5,7 @@ use Nyholm\Psr7\Factory\Psr17Factory;
 use PHPUnit\Framework\TestCase;
 use Swoole\Http\Response;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 
 use Imefisto\PsrSwoole\ResponseMerger;
 
@@ -15,25 +16,13 @@ class ResponseMergerTest extends TestCase
 {
     protected $responseMerger;
     protected $swooleResponse;
-    protected $body;
     protected $psrResponse;
 
     public function setUp(): void
     {
-        parent::setUp();
         $this->responseMerger = new ResponseMerger();
-
         $this->swooleResponse = MockedResponseFactory::create();
-        $this->body = $this->getMockForAbstractClass(\Psr\Http\Message\StreamInterface::class);
-
-        $this->body->method('getMetadata')
-                   ->will($this->returnValueMap([
-                       [ 'wrapper_type', 'PHP' ],
-                       [ 'stream_type', 'TEMP' ],
-                   ]));
-        
         $this->psrResponse = $this->getMockBuilder(ResponseInterface::class)->getMockForAbstractClass();
-        $this->psrResponse->expects($this->any())->method('getBody')->willReturn($this->body);
     }
 
     /**
@@ -206,15 +195,83 @@ class ResponseMergerTest extends TestCase
      */
     public function bodyContentGetsCopiedIfNotEmpty()
     {
-        $this->body->expects($this->once())->method('getSize')->willReturn(1);
-        $this->body->expects($this->once())->method('isSeekable')->willReturn(true);
-        $this->body->expects($this->once())->method('rewind');
-        $this->body->expects($this->once())->method('getContents')->willReturn('abc');
+        $resource = fopen('php://memory', 'r+');
+        $content = 'test content';
+        fwrite($resource, $content);
+        rewind($resource);
+        $factory = new Psr17Factory;
+        $stream = $factory->createStreamFromResource($resource);
+        $psrResponse = $factory->createResponse()->withBody($stream);
 
-        $this->responseMerger->toSwoole($this->psrResponse, $this->swooleResponse);
+        $this->responseMerger->toSwoole($psrResponse, $this->swooleResponse);
 
-        $this->assertEquals(1, $this->swooleResponse->countCalls('write'));
-        $this->assertEquals(['abc'], $this->swooleResponse->call('write'));
+        $this->assertEquals(
+            1,
+            $this->swooleResponse->countCalls('write')
+        );
+
+        $this->assertEquals(
+            $content,
+            $this->swooleResponse->call('write')[0]
+        );
+
+        $this->assertEquals(
+            0,
+            $this->swooleResponse->countCalls('end')
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function bodyContentGetsCopiedFromInitialPosition()
+    {
+        $resource = fopen('php://memory', 'r+');
+        $content = 'test content';
+        fwrite($resource, $content);
+        fseek($resource, 5);
+        $factory = new Psr17Factory;
+        $stream = $factory->createStreamFromResource($resource);
+        $psrResponse = $factory->createResponse()->withBody($stream);
+        $this->responseMerger->toSwoole($psrResponse, $this->swooleResponse);
+        $this->assertEquals($content, $this->swooleResponse->call('write')[0]);
+    }
+
+    /**
+     * @test
+     */
+    public function bodyCanGetCopiedUsingChunks()
+    {
+        $resource = fopen('php://memory', 'r+');
+        $content = str_repeat('x', 2048);
+        fwrite($resource, $content);
+        $factory = new Psr17Factory;
+        $stream = $factory->createStreamFromResource($resource);
+        $psrResponse = $factory->createResponse()->withBody($stream);
+        $autoChunkSize = 1024;
+        $responseMerger = new ResponseMerger(autoChunkSize: 1024);
+
+        $responseMerger->toSwoole($psrResponse, $this->swooleResponse);
+
+        $this->assertEquals(
+            2, 
+            $this->swooleResponse->countCalls('write')
+        );
+
+        $this->assertEquals(
+            substr($content, 0, $autoChunkSize),
+            $this->swooleResponse->call('write', 0)[0]
+        );
+
+        $this->assertEquals(
+            substr($content, $autoChunkSize),
+            $this->swooleResponse->call('write', 1)[0]
+        );
+
+        $this->assertEquals(
+            0,
+            $this->swooleResponse->countCalls('end')
+        );
     }
 
     /**
@@ -222,27 +279,64 @@ class ResponseMergerTest extends TestCase
      */
     public function bodyContentGetsWrittenIfItIsAPipe()
     {
-        $this->body->method('getMetadata')
-                   ->will($this->returnValueMap([
-                       ['mode', 0010600],
-                   ]));
+        $descriptorSpec = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+        ];
 
-        $expectedProcess = popen('php -r "echo str_repeat(\'x\', 16384);"', 'r');
-        
-        $this->body->expects($this->any())
-                   ->method('detach')->willReturn($expectedProcess);
+        $process = proc_open('cat', $descriptorSpec, $pipes);
+        fwrite($pipes[0], str_repeat('x', 16384));
+        fclose($pipes[0]);
 
-        $this->responseMerger->toSwoole($this->psrResponse, $this->swooleResponse);
-        $this->assertEquals('Unknown', get_resource_type($expectedProcess));
-        $this->assertEquals(
-            2,
-            $this->swooleResponse->countCalls('write')
-        );
+        $factory = new Psr17Factory;
 
-        for ($i = 0; $i < $this->swooleResponse->countCalls('write'); $i++) {
+        $stream = $factory->createStreamFromResource($pipes[1]);
+        $psrResponse = $factory->createResponse()->withBody($stream);
+
+        $this->responseMerger->toSwoole($psrResponse, $this->swooleResponse);
+
+        $numberOfWrites = $this->swooleResponse->countCalls('write');
+        $this->assertEquals(2, $numberOfWrites);
+
+        for ($i = 0; $i < $numberOfWrites; $i++) {
             $contents = $this->swooleResponse->call('write', $i);
-            $this->assertEquals(ResponseMerger::BUFFER_SIZE, strlen((string) $contents[0]));
+            $this->assertEquals(
+                ResponseMerger::BUFFER_SIZE,
+                strlen((string) $contents[0])
+            );
         }
+    }
+
+    /**
+     * @test
+     */
+    public function bodyIsCopiedWhenStreamIsNotBackedByAResource()
+    {
+        $body = $this->createMock(StreamInterface::class);
+        $body->method('getMetadata')->willReturn(null);
+        $body->method('__toString')->willReturn('abcde');
+        $psrResponse = (new Psr17Factory)->createResponse()->withBody($body);
+
+        $this->responseMerger->toSwoole($psrResponse, $this->swooleResponse);
+
+        $this->assertEquals(1, $this->swooleResponse->countCalls('write'));
+        $this->assertEquals(['abcde'], $this->swooleResponse->call('write'));
+    }
+
+    /**
+     * @test
+     */
+    public function bodyNotBackedByAResourceCanBeCopiedUsingChunks()
+    {
+        $body = $this->createMock(StreamInterface::class);
+        $body->method('getMetadata')->willReturn(null);
+        $body->method('__toString')->willReturn('abcde');
+        $psrResponse = (new Psr17Factory)->createResponse()->withBody($body);
+
+        (new ResponseMerger(autoChunkSize: 2))->toSwoole($psrResponse, $this->swooleResponse);
+
+        $this->assertEquals(3, $this->swooleResponse->countCalls('write'));
+        $this->assertEquals(['e'], $this->swooleResponse->call('write', 2));
     }
 
     /**
@@ -254,7 +348,7 @@ class ResponseMergerTest extends TestCase
         $expectedUri = __DIR__ . '/dummy.pdf';
         $stream = $factory->createStreamFromFile($expectedUri);
         $psrResponse = $factory->createResponse()
-            ->withBody($stream);
+                               ->withBody($stream);
 
         $this->responseMerger->toSwoole($psrResponse, $this->swooleResponse);
 
